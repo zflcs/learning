@@ -6,7 +6,7 @@
 
 ## 实验结果
 
-![result](./assets/lab1/lab1_result.png)
+![result](https://github.com/Zfl990109/learning/blob/main/reports/assets/lab1/lab1_result.PNG)
 
 ## 问答题
 ### 1. cpu、寄存器、内存、（外设） 
