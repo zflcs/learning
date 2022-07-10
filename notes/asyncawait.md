@@ -97,7 +97,7 @@ impl Future for ExampleStateMachine {
 之前的 async、await 等过程只是编译器创建好了状态机，但是实际上还是没有运行，只有在被 poll 的时候才会执行，必须要在某个地方调用。
 
 - 可以手动的使用 loop 来循环的调用，但是这非常低效，并且在创建了大量的 Future 时不实用，因此需要定义一个全局的 executor 来负责 poll 所有的 Future，这样可以让 executor 来选择切换 Future，因此就可以执行异步操作，轮询则只能顺序执行，不能够灵活处理
-- executor 会创建 waker，让 waker 在任务完成时能够释放信号，从而 executor 不必一直轮询
+- executor 会创建 waker，让 waker 在任务完成时能够释放信号，从而 executor 不必一直轮询，在这个过程实际上就是让当前的 executor 睡眠，然后下一次发生中断，表示事件已经完成，同时也可以通过中断来唤醒 executor 来执行，实际上就是在 loop 中加入了 sleep
 
 
 
@@ -112,9 +112,7 @@ impl Future for ExampleStateMachine {
 
 
 
-#### 异步键盘输入
 
-1. 
 
 #### 存在的疑惑：
 
