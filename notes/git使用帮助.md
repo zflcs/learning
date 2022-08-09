@@ -145,3 +145,9 @@ git pull
 git branch --set-upstream local_branchname origin/remote_branchname
 ```
 
+##### 将本地的 async 分支推送到远程仓库（远程仓库没有 async 分支）
+
+```makefile
+git push --set-upstream origin async
+```
+
