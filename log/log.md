@@ -1,5 +1,15 @@
 ### 用于记录每天的日常
 
+##### 20220823
+
+- 尝试将调度器编译成动态链接库，但是报错，rust不支持编译成riscv动态链接库
+
+    ```makefile
+    cannot produce dylib for `basic_rt v0.1.0 (/home/zfl/rCore/basic_rt)` as the target `riscv64gc-unknown-none-elf` does not support these crate types
+    ```
+
+- 看南大蒋炎岩老师的课，补充一些关于链接的知识
+
 ##### 20220814
 
 - 开始调度的部分
