@@ -1,5 +1,41 @@
 ### 用于记录每天的日常
 
+##### 20220828
+
+- 又想到了关于调度器改进的部分，当前是在内核初始化以及创建进程的时候分别对共享数据进行地址映射，和调度器 elf 文件是分离的，因此可以把 bitmap、cbq、cbq vec 等数据结构直接放到调度器整个的 elf 文件中
+- 尝试把王文智读写管道的实验复现出来
+    - ~~需要把系统调用改造成支持 6 个参数的系统调用，为了支持两套系统调用，规定大于 2000 的系统调用使用 6 个参数的~~
+    - 对内核的 fs 模块内的 inode、pipe 等支持异步读写，创建内核协程，在 pipe 的 aread 实现的过程中，用到了共享库中的 WRMAP、cbq 以及 CUR_COROUTINE，这里还需要引进来，~~因为调度器的代码还不稳定，接口表的位置不固定，所以将共享调度器的接口封装成内核中的函数，方便使用~~
+    - ~~在接口表中增加查询 WRMAP 接口，实现 async_sys_write 系统调用~~
+    - 用户进程执行 async_sys_read 系统调用，接下来会执行 file.aread() 函数，创建一个内核协程，会通过这个内核协程将数据读取到缓冲区；
+    - pipe 的 aread 方法中的实现逻辑：判断 pipe 的缓冲区的可读字节数是否为 0，若为 0 且 pipe 的写的端口是关闭的，则直接退出 loop 循环，否则就会向 WRMAP 中注册 (key, value)；若可读字节数不为 0，则直接读，并且退出 loop 循环，之后向回调队列中注册协程 id
+    - 添加接口，向 WRMAP 中注册 (key, value) ------ (write_tid, read_tid)
+    - 我觉得不用向回调队列中添加用户态的协程了，尝试运行了之后，出现了问题，先执行了 read 协程，然后就跳转去执行 write 协程，write 协程执行完之后，read 协程并没有继续执行；还是尝试向回调队列中添加用户态的 read 协程
+
+##### 20220827
+
+- 终于找到了 bug，创建了 executor 池之后调试发现，仍然是同一个 executor 来添加协程，可能是因为使用的 Arc 以及 vec! 来创建的，创建的仅仅是指针，实际上堆中还是只有一个 executor
+
+    ```rust
+    lazy_static!{
+        pub static ref EXECUTOR: Vec<Arc<Mutex<Box<Executor>>>> = 
+            vec![Arc::new(Mutex::new(Box::new(Executor::new()))); MAX_USER];
+    }
+    ```
+
+    正确的写法
+
+    ```rust
+    lazy_static!{
+        pub static ref EXECUTOR: Vec<Arc<Mutex<Box<Executor>>>> = 
+            (0..MAX_USER).map(|_| 
+                Arc::new(Mutex::new(Box::new(Executor::new())))
+            ).collect::<Vec<Arc<Mutex<Box<Executor>>>>>();
+    }
+    ```
+
+- 下午进行讨论会，发现杨德睿已经将地址空间给独立出来了，那么我可以在把内核地址空间映射共享数据的部分独立出来解耦合，然后再将杨德睿目前统一的进程、线程、协程的切换结合起来，那就可以把共享库给完全独立出来
+
 ##### 20220826
 
 - 翻看了 osdi22 以及 osdi20 的目录，找了几篇感兴趣的文章
