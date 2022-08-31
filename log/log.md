@@ -1,5 +1,25 @@
 ### 用于记录每天的日常
 
+##### 20220831
+
+- 阅读文献
+
+- 实验测试，发现了一个问题，执行完的协程并没有删除，因此在运行另一个进程时，会报错，这应该是原来的代码的没有实现
+
+    - | 堆大小 | 可创建的管道数 |
+        | ------ | -------------- |
+        | 0x8000 | 46             |
+        | 0xa000 | 79             |
+
+- 修改 bitmap，还没有完成
+
+##### 20220830
+
+- fork 了杨德睿的仓库，把 target 改成了 riscv64gc-unknown-none-elf
+    - 目前是只有 ch1 分离出了 lab，运行 （`cargo qemu -c 1`）ch1 只会打印 rust-sbi 的信息，完成了 lab 之后运行（`cargo qemu -c 1 --lab`）会通过等级控制打印出 hello world；output 单例模式设置输出；
+    - ch2 通过 xtask 里的脚本将 target/arch/debug/app.asm 里的内容添加到 env 这个（key, value）中，然后通过 global_asm!(include_str!(env!(APP_ASM))) 将任务的二进制数据直接与内核连接起来；ch2 增加了 write、exit 系统调用，`la t0, 1f` 此处的 1f 指的是后面的 label 1所标记的代码
+    - ch4 的内容没有完成
+
 ##### 20220829
 
 - 开组会、阅读学生手册
