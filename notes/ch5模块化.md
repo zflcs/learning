@@ -1,10 +1,10 @@
 需要资源分配模块
 
-PCB：依赖地址空间模块、资源分配模块
+PCB：依赖地址空间模块、资源分配模块、context 模块
 
-TCB：
+TCB：依赖资源分配模块、context 模块
 
-协程 future：
+协程 future：context
 
 
 
@@ -16,14 +16,14 @@ TCB：
 
 ```rust
 /// 进程、线程、协程都必须实现这个 trait
-pub trait execute {
+pub trait Execute {
     fn execute();
 }
 
 /// 进程管理器能够管理的是实现了 executor 这个特性的任务
 pub trait Manager: Sync {
-	fn fetch(&self) -> &Arc<dyn execute + Sync + Send>;
-    fn add(&self, task: &Arc<dyn execute + Sync + Send>);
+	fn fetch(&self) -> &Arc<dyn Execute + Sync + Send>;
+    fn add(&self, task: &Arc<dyn Execute + Sync + Send>);
 }
 
 /// 任务管理器
@@ -53,4 +53,10 @@ pub fn waitpid();
 ```
 
 
+
+##### 面临的问题：
+
+MANAGER 中取出的不知道是进程、线程还是协程
+
+这时候执行系统调用处理时，内核不知道
 
