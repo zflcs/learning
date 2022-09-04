@@ -1,5 +1,14 @@
 ### 用于记录每天的日常
 
+##### 20220904
+
+- 修改共享调度器代码
+    - 将 Executor 重命名为 Manager，只负责从中取出任务，以及添加任务
+    - 将 BitMap 放到 TaskQueue 中；将 TaskQueue、TaskWaker 分出来
+    - 在 UserTask 中添加 Waker，每个 task 都有一个 waker 对应，之前的方式就是完全脱离的，这种实现方式，使得 Manager 中不需要再添加 waker_cache，task 的推进交给自己的 execute 方法 
+    - 不再单独设置回调队列，在 Manager 中设置一个 callback_queue，直接将 id 添加到这个队列中，在每次 fetch 取出任务时，会先将回调队列中的所有任务先唤醒
+- 测试管道读写时，出现问题，还需要修改
+
 ##### 20220903
 
 - 确定 ch5 的接口以及依赖的模块
