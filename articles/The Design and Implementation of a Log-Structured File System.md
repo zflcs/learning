@@ -68,6 +68,89 @@
 四个问题：
 
 - 什么时候运行 segment cleaner 程序？以较低的优先级在后台持续运行；只在晚上运行；只在磁盘空间耗尽时
-- 一次清理多少个段？一次清理的段的数量越多，段重新安排的机会越多
+- 一次清理多少个段？一次清理的段的数量越多，段重新安排的机会越多；
 - 哪些段需要被清理？明显的结果是碎片化最严重的段，但实际上，这并不是最好的选择
 - 当活跃的块被写出时，应该怎么组织？一种方式是增强局部性，方便之后的读操作；另一种方式是根据块最后一次修改的时间排序，将 age 相似的块组织到同一个段中（age sort）
+
+对于第二个问题，LFS 当干净的段数量低于某个阈值时开始清理，直至干净的段高于另一个阈值，LFS 的性能与阈值的设置不敏感；相比之下，第三、四个问题的策略更为重要。
+
+写开销：磁盘写新数据所占的带宽与最大带宽的比值的倒数（LFS 中磁盘寻道和旋转的时间可以忽略不计，u 表示段的利用率）
+$$
+write cost = \frac{total\ bytes\ read\ and\ write}{new\ data\ written}
+			= \frac{read\ segs\ +\ write\ live\ +\ write\ new}{new\ data\ written}
+			= \frac{2}{1 - u}
+$$
+
+##### Simulation results
+
+uniform 策略：每个文件在每个阶段被选择的可能性相同
+
+hot-and-code 策略：10% 的文件访问次数占90%，90% 的文件访问次数只占 10%；hot 和 cold 组内部被选择的概率相同
+
+模拟测试结果：
+
+- 使用的 uniform 策略，写开销也比上述公式预测的结果要低很多
+- LFS hot-and-code 策略，曲线和 uniform 策略基本相同，但是活跃块在写出时是按照 age 来进行排序，因此会导致长期活跃的块与短期活跃块相分离
+- hot-and-cold 策略局部性更强，性能反而更差（贪心策略选择碎片化最严重的段，但是 cold 组内的段碎片化的程度增长的很缓慢，因此得不到及时清理，导致大量的空闲空间浪费）
+    - 解决措施：区别对待 hot 和 cold 组，cold 组的段的空闲空间更有价值，一旦 cold 组内的段被清理了，就需要花很长一段时间来收集无法使用的空闲空间，hot 组内的段清理的价值更低，因此 hot 组的清理可以推迟一些
+
+- cost-benefig 策略：选出 benefit/cost 最高的段进行清理，采取这种策略，随着局部性提高，性能越好（u 表示段利用率，age 表示最近修改的文件的时间到当前时刻的时间）
+    $$
+    \frac{benefit}{cost} = \frac{free\ space\ generated\ *\ age\ of\ data }{cost} = \frac{(1-u)*age}{1+u}
+    $$
+
+#####  Segment usage table
+
+LFS 维护了一个 segment usage table 的数据结构来支持 cost-benefit 策略
+
+- 对于每个段，这个表记录了段中的活跃字节数以及段中的每个块最近修改的时间，segment cleaner 根据这两个值来选择段（这个segment usage table 所在的块在 log 中记录，并且被存放在固定检查区域）
+
+#### Crash recovery
+
+一旦发生系统崩溃，磁盘上最近的几次操作会处于不正常的状态，UNIX FFS 没有 log 结构，因此必须要扫描整个磁盘来恢复，但是 LFS 只需要恢复最近的几次操作即可，这些操作被记录在 log 的最后位置，因此可以快速恢复（很多数据库系统以及文件系统都采用了这种方式），LFS 采用了 checkpoints 以及 roll-forward 两种结合的恢复方法
+
+##### Checkpoints
+
+checkpoint 是 log 结构中所有文件系统结构一致性和完整性的一个位置。LFS 用两个阶段性程序来创建一个 checkpoint。
+
+- 第一阶段记录了所有的修改信息到 log 结构中，包括文件数据块、间接块、inode 以及 inode map、segment usage table 所在的块。
+- 第二阶段会将 checkpoint 区域记录到磁盘上的固定位置
+
+在恢复时，LFS 先读取checkpoint 区域并且用其中的信息恢复内存中的数据结构，为了避免 checkpoint 崩溃，因此进行了备份。并且在区域的最后位置会记录 checkpoint 时间，如果checkpoint 不成功，这个时间不会更新。
+
+LFS 会以周期性间隔在文件系统被卸载或者系统关闭时进行 checkpoint。时间间隔越长，虽然减少了检查的开销，但是每次恢复需要回滚的时间越多，时间间隔越短，增加了检查开销，但是恢复所需的时间也越短。
+
+通过写入给定量的新数据之后进行周期性的检查，从而避免了恢复时间过长，也减少了检查花的时间
+
+##### Roll-forward
+
+LFS 不仅仅是恢复最后一次检查之前的数据，也会扫描在 log 中在最后一次检查之后重新写入数据的段，尽可能恢复多的数据。
+
+- 使用段摘要块中的信息来恢复最近写的文件数据，如果摘要信息显示创建了一个新的 inode，则会读取 checkpoint ，并且更新 inode map。
+- roll-forward 程序也是根据从 checkpoint 读取的 segment usage table 中的利用率来变化，在 roll-forward 之后需要记录活跃数据，以及文件删除的数据
+- LFS 会在 log 中记录每一个目录的变化的数据结构（directory operation log），用来恢复目录和 inode 的一致性，这个目录变化的数据结构会记录 create、link、rename、unlink 等操作，会记录目录实体的位置，以及 inode 的引用计数
+- 恢复程序会将恢复的信息的变化附加在 log 中，并在一个新的检查区域中记录
+
+唯一不能恢复的操作是创建了一个新文件，但是 inode 从没有写过，这种情况下，目录实体会被删除
+
+directory operation log 以及 checkpoints 操作之间的交互，给 LFS 带来了额外的同步问题
+
+#### Experience with the Sprite LFS
+
+- 其余的部分已经实际使用了，只有在 roll-forward 还没有用在生产系统中，生产系统的磁盘采取短间隔（30s），并且将最后一次检查之后的信息全部抛弃
+
+- LFS 比 UNIX FFS 的复杂度更低，尽管 segment cleaner 增加了复杂性，但是这与减少的 bitmap 以及 UNIX FFS 要求的布局策略的复杂性相抵消；但是恢复操作，LFS 比起 UNIX FFS 扫描整个磁盘降低了不少复杂性
+- LFS 比 SunOS 在小文件的创建访问方面快，大文件的顺序/随机写比 SunOS 快，但是在顺序/随机读方面比 SunOS 稍微逊色
+- 传统的文件系统假设读取是符合局部性的，因此会在写的时候会为了未来的读产生额外的开销来提高局部性；LFS 则是考虑的短期局部性，会将最近修改的文件放在一起
+- 在实际的运行时，考虑写开销时，LFS 比预期的更好
+
+#### Related work
+
+#### Conclusion
+
+
+
+#### 阅读中产生的想法：
+
+利用 log 来异步？？？
+
