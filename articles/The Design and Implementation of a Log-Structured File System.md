@@ -154,3 +154,5 @@ directory operation log 以及 checkpoints 操作之间的交互，给 LFS 带�
 
 利用 log 来异步？？？
 
+在内存的缓冲区中记录 log ？？？
+
