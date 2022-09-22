@@ -35,8 +35,6 @@ impl<T, I: Copy + Ord> TaskManager<T, I> {
 
 MANAGER 如果是所有核共用同一个？？？那 MANAGER 就会上锁，势必会影响性能；还是只能在每个核设置一个 MANAGER，每个核在执行的时候，可以获取自己的 hart_id，所以这个问题就解决了；资源目前看来也可以这样解决
 
-
-
 尝试把 sync 抽出来模块化，但是需要依赖 suspend_current_and_run_next、block_current_and_run_next
 
 这两个接口单纯靠 task-manage 不能实现，因此还需要将 processor 也抽象出来，由 processor 来提供这两个接口
@@ -45,13 +43,7 @@ MANAGER 如果是所有核共用同一个？？？那 MANAGER 就会上锁，势
 
 在线程这个层面，task-manager 由主线程负责
 
-
-
 **刚刚看了廖东海的demo，提醒了我一下，可以再写一个 scheduler，实现不同的调度**
-
-
-
-
 
 processor 接口
 
@@ -79,4 +71,3 @@ impl <T, I: Copy + Ord> Processor<T, I> {
     pub fn make_current_exited(&mut self);
 }
 ```
-
