@@ -1,5 +1,19 @@
 ### 用于记录每天的日常
 
+
+##### 20220926
+* 测试本科生的实验环境，发现几个问题
+  * 子模块不太友好，git submodule update --init 总是报错没有权限，目前是直接 git clone 子模块到 ci-user
+  * config 中 KERNEL_STACK_SIZE 设置 应该为 8192 * 2
+  * 如果 qemu 的版本是 7.1.0 ，还需要更新 rustsbi-qemu.bin
+  * time::read() 读出来的是一些奇怪的字符
+* 阅读了协程的相关资料，leaf-future 以及 non-leaf-future
+  * leaf-future 仅仅指的是由异步运行时创建的 future
+  * non-leaf-future 指的是用 async/await 手动创建的 future
+  * executor 如何来 poll，目前的想法是先把所有的 非阻塞的协程先执行了，然后再执行不断地 poll 那些被阻塞的协程，虽然非常低效，先这样子用吧，如果需要等到完成的时候 poll 一次的话，应该需要其他的机制进行配合
+* 关于调度代码的部分，与廖东海进行了交流
+* xxos 进一步推进
+
 ##### 20220922
 
 * 思考调度器的模块化

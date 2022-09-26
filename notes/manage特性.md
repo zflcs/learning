@@ -53,21 +53,35 @@ processor 接口
 
 ```rust
 
-use super::TaskManager;
+use super::{
+    manager::TaskManager,
+    scheduler::{Schedule, FifoScheduler},
+    task::Execute,
+};
+use kernel_context::foreign::ForeignPortal;
 
 /// 处理器
-pub struct Processor<T, I: Copy + Ord> {
-    // 进程管理调度
+pub struct Processor<T: Execute, I: Copy + Ord> {
+    portal: ForeignPortal,
     manager: TaskManager<T, I>,
+    // 进程管理调度
+    scheduler: FifoScheduler<I>,
     // 当前正在运行的进程 ID
     current: Option<I>,
-
 }
 
-impl <T, I: Copy + Ord> Processor<T, I> {
+impl <T: Execute, I: Copy + Ord> Processor<T, I> {
+    /// 新建 Processor
     pub fn new() -> Self;
+    /// 运行下一个进程
     pub fn run_next(&mut self);
+    /// 阻塞当前进程
     pub fn make_current_suspend(&mut self);
+    /// 结束当前进程
     pub fn make_current_exited(&mut self);
+    /// 添加进程
+    pub fn add(&mut self, id: I, task: T);
+    /// 当前进程
+    pub fn current(&mut self) -> Option<&mut T>;
 }
 ```
