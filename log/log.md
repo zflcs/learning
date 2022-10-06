@@ -1,5 +1,29 @@
 ### 用于记录每天的日常
 
+##### 20221006
+* 写自然辩证法和中特作业
+* 读高等计算机网络论文
+* EXECUTOR 支持添加带优先级的协程，与编译器的斗争，但还是有缺陷，vec 只能
+  * ```rust
+    const VAL: Vec<CoroutineId> = vec_init();
+    pub const fn new() -> Self {
+        Self {
+            tasks: BTreeMap::new(),
+            ready_queue: [VAL; PRIO_NUM],
+            block_queue: Vec::new(),
+            waker_cache: BTreeMap::new(),
+        }
+    }
+    ```
+* 创建线程数据结构，切换到一段代码，然后执行，但是 yield_thread 返回时，报错如下，初步判定为不能直接将栈清空，因为里面还有一些东西，所以导致报错
+  * ```
+    [ERROR] unsupported trap: Exception(InstructionPageFault) stval = 0x1d517f5067170
+    [ERROR] sepc = 0x1d517f5067170
+    ```
+
+##### 20221005
+* 读论文
+
 ##### 20221004
 * EXECUTOR 的处理和 HEAP 处理相同，目前可以添加协程运行了，但是还是只能够用 const fn 来声明，还是有缺陷
 * 思考 XXOS 实现的细节
