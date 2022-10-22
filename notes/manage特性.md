@@ -85,3 +85,25 @@ impl <T: Execute, I: Copy + Ord> Processor<T, I> {
     pub fn current(&mut self) -> Option<&mut T>;
 }
 ```
+
+
+
+#### Manage trait
+
+Processor 对象：任务队列 + 调度策略
+
+任务队列中的对象是在内核中定义的，调度的策略也是在内核中定义
+
+```
+
+```
+
+增删改查
+
+```
+insert：增加对象
+remove：删除对象
+get_mut：获取可变引用，进行修改
+get：查询
+```
+
