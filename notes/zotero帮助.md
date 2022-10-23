@@ -1,3 +1,7 @@
+[TOC]
+
+
+
 ## zotero 文献<u>管理</u>、<u>共享</u>工具使用
 
 ### 下载以及安装
@@ -39,3 +43,26 @@
     <img src = "../assets/zotero群组文献说明.jpg">
 
 3. 文献的链接部分，主要用于添加文献的代码仓库等
+
+### Research Rabbit 配套插件
+
+- 地址：[Research Rabbit (researchrabbitapp.com)](https://researchrabbitapp.com)
+
+1. 注册之后，连接 zotero
+
+   ![](./zotero%E5%B8%AE%E5%8A%A9.assets/%E8%BF%9E%E6%8E%A5zotero.jpg)
+
+2. 导入 zotero 文献
+
+   ![](./zotero%E5%B8%AE%E5%8A%A9.assets/%E5%AF%BC%E5%85%A5zotero%E6%96%87%E7%8C%AE1.jpg)
+
+   ![](./zotero%E5%B8%AE%E5%8A%A9.assets/%E5%AF%BC%E5%85%A5zotero%E6%96%87%E7%8C%AE2.png)
+
+3. 查看文献相关工作等详细信息
+
+   ![](./zotero%E5%B8%AE%E5%8A%A9.assets/%E6%96%87%E7%8C%AE%E7%9B%B8%E5%85%B3%E4%BF%A1%E6%81%AF1.jpg)
+
+   ![](./zotero%E5%B8%AE%E5%8A%A9.assets/%E6%96%87%E7%8C%AE%E7%9B%B8%E5%85%B3%E4%BF%A1%E6%81%AF2.png)
+
+   
+
