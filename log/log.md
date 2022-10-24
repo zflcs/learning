@@ -1,5 +1,11 @@
 ### 用于记录每天的日常
 
+##### 20221024
+
+- 下午补写了中特的作业
+- 然后同步廖东海的更新，但是在我这里不稳定出现死锁
+- 看 Redox 相关的资料
+
 ##### 20221023
 
 - 尝试 [Research Rabbit (researchrabbitapp.com)](https://researchrabbitapp.com)，维护 zotero 使用帮助
