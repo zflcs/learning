@@ -1,5 +1,17 @@
 ### 用于记录每天的日常
 
+##### 20221102
+
+- 昨天记录了，但是没有提交日志
+- 继续改 task-manager，完善了 wait 系统调用和 exit_code 这两个机制，但是似乎还有一点点问题，forktest2 不能通过，应该是 wait这里实现的有问题，tutorial 里面 wait 系统调用的那几个布尔运算写的挺简单的，但是换成我自己写的方式就很容易漏掉一些情况（艹）
+- 新增了 forktest、forktest2、forktree、matrix 这几个测例，均可以通过，ch6 写文件有问题，ch7 信号 sig_tests 测例卡在 final_sig_test，其余的 sig 测例均可以通过
+- 明天再写第八章的吧。。。
+
+##### 20221101
+
+- task-manage 模块应该改的差不多了？还没有添加 thread 相关的系统调用
+- thread 相关的系统调用都添加了，还没有进行测试，需要先把这个 relation 给捋清楚
+
 ##### 20221031
 
 - 继续改 task-manage 模块，把进程之间以及进程与线程之间的关系从 PCB、TCB 中移出来，大体上完成，还有一些 bug
