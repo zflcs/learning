@@ -61,4 +61,27 @@ file mapping 结构需要实现三个功能：lookups、insertions、deletions�
 
 - Global Cuckoo Hash Table：使用两个不同的 hash 函数 hash 两次，查找只需要访问两个位置，插入时如果两个位置都满，则会挑出一个已存在的 entry，将其移动到备用位置，继续上述过程，直到不再发生冲突。（占了位置就踢出去）
   - 连续数组，创建文件系统时静态分配，<u>在保持一致性时，先持久化 mapping info（物理块号，大小），再持久化 key（inum，逻辑块号），用 key 作为有效指标。（不太明白什么意思）</u>插入时保持一致性很复杂（会移动之前的 entry），通过在 undo log 中记录操作来保证。复杂的更新需要的原子操作也更多，因此使用 intel TSX 代替 per-entry 锁提供隔离（非常有必须，插入可能会跨文件同时发生）
-  - 一对一映射，对于连续分配的块不友好，因此每个 entry 都包括一个字段来记录连续的块数目。
+  - 一对一映射，对于连续分配的块不友好，因此每个 entry 都包括一个字段来记录连续的块数目。每个 entry 还包括一个反向索引，保证在删除末尾的块时同一个连续组的所有 entry 会更新。（感觉开销很大？？？）
+  - 可以并行查找，使用 SIMD 指令
+  - 在 cuckoo 策略和线性探测之间需要权衡，cuckoo 只需要查找两次位置，但是局部性很差
+- HashFS：为了减少插入操作的开销，hash 表 + 块分配器
+  - 将设备划分为 metadata 区域和 file data 区域，没有范围表示，只提供逻辑块与物理块的一对一映射，将 inum 与 逻辑块号整合成 64 位的整型，用原子指令可以保证一致性，
+  - 使用 SIMD 指令进行向量 hash  操作，如果没用到最大的 SIMD 带宽，则会预取 entry 缓存进入转换关系缓存中
+  - 使用线性探测，局部性较好
+  - 不会像 cuckoo 把 entry 踢出去再重新分配，不会破坏之前的 entry 的映射关系
+  - 只用一次 hash，但是解决冲突的开销很大，在负载因子较高的时候性能较差
+
+#### Evaluation
+
+- 局部性：cold cache 上快 15 倍，因为对 tree 的操作需要多次的间接访问，cold cache insert 时，Cuckoo hash 策略的全局 hash 表表现的性能差（因为 cache 未命中，并且块分配使用的是红黑树，并且在内核线程之间还有互斥锁）。全局 hash 表比 per-file 映射结构更高效，尤其是访问没有局部性时
+- 碎片：只有 extent tree 会受到较大的影响，HashFS 不受到碎片的影响
+- 文件大小：per-file mapping 会根据文件大小拓扑结构不同，global hash table 则是扁平的，只有 Cuckoo hash 策略在插入的开销较大
+- IO size：随着 IO size 增加，延迟会增加（不管是什么 file mapping，均会增加，但是增加的程度不同）
+- 空间利用率：global hash 表随着已经使用的 bucket 增加，会导致碰撞增加，从而会导致 file mapping 延迟增加；per-file mapping 延迟不会因为空间利用而变化，80% 空间利用率时，HashFS 和 Cuckoo hash table 区别不大，在 95% 时，HashFS 读的延迟较高，插入的延迟一致。
+- 并发：隔离机制并不是瓶颈，并且 global file mapping 可以有效的隐藏同步开销
+- 页缓存：提倡使用开销较低的缓存方式（cursor），而不是页缓存
+
+##### File Mapping via Level Hashing？
+
+不建议使用 PM storage structure
+
