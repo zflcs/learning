@@ -85,3 +85,13 @@ file mapping 结构需要实现三个功能：lookups、insertions、deletions�
 
 不建议使用 PM storage structure
 
+
+
+点评：
+
+- 设计了 4 种在 PM 设备上的 file mapping 数据结构，进行了测试，说明了传统的 per-file mapping 数据结构、以及页缓存机制不适用于 PM 设备
+- 对于并发时的一致性，依赖 SIMD 指令以及某一项技术，并且文章没有详细的说明采取什么样的策略，只简单提了一下
+- 这里的 PM 设备是用在中间层，还是整个底层的块设备都是用的这个，这个没有说清楚
+
+![](Rethinking File Mapping for Persistent Memory.assets\存储结构图.png)
+
