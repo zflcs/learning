@@ -132,6 +132,64 @@ TPG 对这些依赖进行编码，Tiramisu 为网络中的每个 ip 子网构建
 
 **开销/偏好**：指标向量，根据边的不同，具体的指标可能会不同
 
+### 策略类别1
+
+#### TPVP（Tiramisu 路径向量协议）
+
+SPVP 和 路由代数，没有考虑同一域内不同协议之间的依赖关系；Plankton 考虑了这个，但是在 RPVP 中用了集中处理的方式来解决这个问题
+
+- 路由代数：为路由协议的路径开销计算和路径选择算法建模
+- TPVP：扩展了 SPVP，使用了共享内存，而不是消息传递；它通过计算路径签名和使用对应于不同协议的路由代数操作选择路径，对多个协议进行串联建模
+
+#### Tiramisu Yen 算法
+
+### 策略类别2
+
+#### Tiramisu Min-cut：
+
+只考虑必要的属性，当使用包过滤（ACLs）时，ILP 不准确。
+
+#### Tiramisu 最长路径
+
+### 策略类别3
+
+TDFS 多次调用 DFS 统计标签
+
+
+
+### 验证效率
+
+- 生成 TPG 所需时间：大型网络约等于 1ms
+- 验证各种策略：WAYPT 使用了 TDFS，和 BLOCK 相同
+  - BLOCK < 3ms
+  - PREF 画的时间比 BLOCK 多
+  - KFALL、BOUND 最慢，约等于 80ms
+- 与其他工具比较
+  - Minesweeper：PREF 加速不明显，BOUND 50X，使用 TDFS 的策略加速高达 600 ~ 800X；即使没有故障发生，Tiramisu 在所有的策略方面都比 Minesweeper 好；在验证 KFALL 和 BOUND 时，使用的变量比 Minesweeper 少 10 ~ 100X
+  - Plankton：对于 iBGP 网络性能很差，对于大型网络，内存不足错误；小型网络，Tiramisu 比 Plankton 快 100 ~ 300X；在只有 OSPF 协议时，Plankton 可能快速尝试了故障连接，因此可能会快一点，但是不考虑这个，Tiramisu 在只有 OSPF 协议的网络上比 Plankton 快 2 ~ 50X
+  - Batfish：快 70 ~ 100X
+  - Bonsai：快 9X
+- 规模大小：在大型网络上 < 0.12s
+  - PREF 和 BOUND 相当，KFALL 时间明显较长，BLOCK 时间最短
+- TYEN 加速：小型网络加速达 1.4X；大型网络加速达 3.8X
+
+### 扩展和限制
+
+优点：虽然只描述了 BGP 和 OSPF，同样可以用于其他的协议（RIP 和 EIGRP），也可以对 VRFs 建模
+
+缺点：
+
+- 没有对 advertisements 建模，因此无法确定是否存在可能违反策略的外部 advertisements；
+- 只能穷尽地探索链路故障
+- 必须提供具体的外部 advertisements 实例，才可以分析给定 advertisements 下的网络，是否可能违反任何策略
+- 无法验证 Control Plane 是否等价
+- 不是普遍的替代物
+- 不能检查定量的 advertisements 
+- 在 TPG 中对包过滤器的建模只考虑了基于 ip 的过滤，因此可能会误判可达性
+- 没有考虑影响路由 advertisements 的包过滤器
+- 无法对 iBGP 导致的路由偏转进行建模
+- 无法对 iBGP 进程为从其 iBGP 邻居接收的路由分配首选项（lp）或基于标签的过滤器进行建模
+
 
 
 
