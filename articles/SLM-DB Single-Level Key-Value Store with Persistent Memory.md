@@ -57,7 +57,7 @@ PM 将经由存储器总线而不是块接口连接，PM 设备上的故障单�
 
 #### Single-level Merge DB（SLM-DB）
 
-![image-20221124144924326](E:\桌面\learning\articles\SLM-DB Single-Level Key-Value Store with Persistent Memory.assets\image-20221124144924326.png)
+![image-20221124144924326](SLM-DB Single-Level Key-Value Store with Persistent Memory.assets\image-20221124144924326.png)
 
 在 PM 中保存 MenTable 和不可变 MenTable，因此不需要 WAL 预先写日志，硬盘上的 SSTabel 组织成单层的，减少了必须要的操作。为了加快 SSTable 文件的单级组织上的读取操作，SLM-DB 构建了一个持久的 B+ 树索引。此外，SLM-DB 需要在 SSTables 中保持足够的 KV 顺序（即，KV 对按排序顺序存储的程度），以便能够提供合理的范围查询性能。尽管没有层次的压缩合并，但是还是需要压缩合并组织成有序的状态，因此采用了选择性压缩合并，并且将这个操作的日志记录在 PM 中。
 
