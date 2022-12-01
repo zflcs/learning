@@ -9,4 +9,6 @@
 
 - 学习笔记见 [notes](notes)
 
+- 课程大作业见 [assignments](assignments)
+
 使用的文献管理工具为 zotero，对于异步操作系统感兴趣，可以根据[帮助](notes/zotero帮助.md)加入 AsyncOS 群组，一起阅读文献。
