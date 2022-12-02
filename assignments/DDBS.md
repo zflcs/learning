@@ -1,8 +1,16 @@
 ### 分布式数据库大作业
 
-##### 1129
 
-- 安装了 Docker
-- 创建了一个 centos 的容器，在容器中安装 hdfs
-- 数据中心设计
+
+##### 20221202 
+
+- maven 创建 springboot 项目
+
+- Java API 访问容器中的 hadoop 
+
+##### 20221201
+
+安装了 Docker
+
+部署了 hadoop 环境，一台 master + 两台 slave
 
