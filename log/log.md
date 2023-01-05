@@ -10,6 +10,17 @@
 
 
 
+##### 20230105
+
+- 阅读论文 A Survey of Asynchronous Programming Using Coroutines in the Internet of Things and Embedded Systems
+- 阅读论文 Revisiting Coroutines
+- 完善论文大纲
+
+##### 20230104
+
+- 和廖东海讨论实验的目的和模型
+- 完善论文大纲，看参考文献
+
 ##### 20230101
 
 - 创建 overleaf 项目，overleaf 同步 github 需要钱，所以还是通过 github 
