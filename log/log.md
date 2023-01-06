@@ -10,6 +10,12 @@
 
 
 
+##### 20220106
+
+- 开组会
+- 观看演示，讨论
+- 阅读参考文献 A coroutine framework for transaction processing
+
 ##### 20230105
 
 - 阅读论文 A Survey of Asynchronous Programming Using Coroutines in the Internet of Things and Embedded Systems
