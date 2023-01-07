@@ -10,7 +10,12 @@
 
 
 
-##### 20220106
+##### 20230107
+
+- 阅读文献 Kotlin Coroutines: Design and Implementation
+- 开始第一天的运动
+
+##### 20230106
 
 - 开组会
 - 观看演示，讨论
