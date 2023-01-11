@@ -10,6 +10,25 @@
 
 
 
+##### 20230111
+
+- 学习 jammdb
+
+##### 20230110
+
+- 看 RT-Thread 文档
+- 写 xxos 代码，复习 riscv 特权处理
+
+##### 20230109
+
+- 看 RT-Thread 文档
+
+##### 20230108
+
+- 上午做家务代替今天的运动
+- 阅读 NVM 相关的调研文献
+- 阅读 RT-Thread 文档
+
 ##### 20230107
 
 - 阅读文献 Kotlin Coroutines: Design and Implementation
