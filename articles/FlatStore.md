@@ -41,19 +41,17 @@
 #### How is the system designed?
 
 ##### Compact log
-log 只用来存储索引的元数据和小规模的 KV 对，使用 operation log 技术格式化 log 条目，而不是记录每个索引的更新。
-大规模 KV 使用 NVM 分配器单独存储，并且不需要持久化 NVM 分配器的元数据。
+log 只用来存储索引的元数据和小规模的 KV 对，使用 operation log 技术格式化 log 条目，而不是记录每个索引的更新。大规模 KV 使用 NVM 分配器单独存储，并且不需要持久化 NVM 分配器的元数据。
 
 log 条目结构
 - 只存储 key 和 ptr
 - 存储 key 和 value
 更新时，在 log 后追加 log 条目，再更新对应的变化的索引结构；查询时，通过给定的 key 在索引结构中找到对应的条目，避免查找整个 log
 
-
 padding：在批处理之后添加 padding 保证能够 cacheline-aligned
 
 ##### lazy-persist allocator
-使用分配器存储大的 KV 会造成额外的刷新开销，log 条目中的 ptr 记录了已经分配的地址信息，因此可以懒惰的对分配器的元数据进行持久化。而分配器要求支持变长分配，因此采用了 Hoard-like lazy-persist allocator。
+log 条目中的 ptr 记录了已经分配的地址信息，因此可以懒惰的对分配器的元数据进行持久化。而分配器要求支持变长分配，因此采用了 Hoard-like lazy-persist allocator。
 - 将 NVM 分配成 4MB 大小的 chunk，再将 4MB 分成不同类别的 data block，同一个 chunk 中的 data block 属于同一个类别，这些数据块的大小信息被记录在每个 chunk 的头部中，用于分配，并且还用 bitmap 来跟踪未使用的 data block。这种设计，使得每个 chunk 是 4MB 对齐且 chunk 头部记录了存储的粒度，因此可以通过 ptr 直接计算出已经分配的 block 在 NVM 中的位置，从而可以恢复 bitmap。
 - 考虑到可扩展性，chunk 被划分给不同的核
 
@@ -62,26 +60,23 @@ Put 操作
 2. 初始化 log 条目并持久化，添加到 log 尾部
 3. 在动态变化的索引结构中更新 log 条目相关的入口
 
-冲突一致性：通常需要进行异地更新，因此，除了上述的3个步骤之外，还需要释放原来的块，被释放的块可以立即使用（因为 read-after-delete 异常在 FlatStore 中不会发生）
+冲突一致性：通常需要进行异地更新，因此，除了上述的3个步骤之外，还需要释放原来的块，被释放的块可以立即使用（因为 read-after-delete 异常在 FlatStore 中不会发生，相同的 key 会被分配到同一个 server core 中，使用冲突队列进行串行化处理）
 
-通过将小型的 KV 对存储在 log 条目中，刷新的次数减少了很多。
 
 ##### pipelined horizontal batching
 - 减少竞争，保证正确性的前提下，提前释放锁
 - 对 server core 进行编组，使得负载均衡
-vertical batching：batches 只收集所在的核上的请求，尽管减少了持久化开销，但是高延迟的负面影响。会减少每个核上进行批处理的机会，
 
-Pipelined Horizontal Batching (Pipelined HB)：在 Naive HB 的基础上发展而来。采用了以下方式：
+在 Naive HB 的基础上发展而来。采用了以下方式：
 - 核之间的全局锁保证同步
-- 每个核的请求池可和之间通信
+- 每个核的请求池可通信
 分三个阶段进行持久化：
 - l-persist：分配空间和持久化 KV 条目
 - g-persist：持久化 log 条目
 - volatile phase：更新变化的索引结构
 一旦某个核没能获取到全局的锁，就会轮询下一个到达的请求，开始执行第二个 Horizontal Batching。而获取到锁的核称为 leader core，它从其他的核收集了 log 条目之后立即释放锁。没有获取到锁的核异步的等待上一个 lead 核 完成的消息。
 Discussion：会对请求重新排序，因此在之后的 get 操作访问之前的 put 操作相同的 key 的数据可能会失败。为了解决这种问题，每个核会维护一个独占拥有的冲突队列来跟踪正在处理的请求。任何冲突的 key 的请求会被延迟。
-
-Pipelined HB with Grouping：大量的核竞争全局锁时，会导致大量的同步开销。对几个核进行编组，组内的核竞争一个锁，几个组之间竞争全局锁。将同一个 socket 的核编组效果最佳。
+大量的核竞争全局锁时，会导致大量的同步开销。对几个核进行编组，组内的核竞争一个锁，几个组之间竞争全局锁。将同一个 socket 的核编组效果最佳。
 
 ##### Log Cleaning
 避免 OpLog 随意增长，需要进行压缩，丢弃掉过时的 log 条目。每个核维护一个内存中的 table 来跟踪 OpLog 中指向的 4MB 的 chunk。
