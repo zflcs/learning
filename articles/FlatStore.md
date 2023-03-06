@@ -34,84 +34,75 @@
 ### Design
 
 #### What are the key insight from the design?
-
-
-
+核心的设计是 pipelined horizontal batching，因为即使对 log 进行了压缩，刷新时的粒度仍然是 cache 的粒度，仍然不能利用 NVM 的带宽。
 
 #### How is the system designed?
 
 ##### Compact log
 log 只用来存储索引的元数据和小规模的 KV 对，使用 operation log 技术格式化 log 条目，而不是记录每个索引的更新。大规模 KV 使用 NVM 分配器单独存储，并且不需要持久化 NVM 分配器的元数据。
 
-log 条目结构
-- 只存储 key 和 ptr
-- 存储 key 和 value
-更新时，在 log 后追加 log 条目，再更新对应的变化的索引结构；查询时，通过给定的 key 在索引结构中找到对应的条目，避免查找整个 log
-
-padding：在批处理之后添加 padding 保证能够 cacheline-aligned
+log 条目结构划分为 ptr-based 和 value-based 两种类型，每个 log 条目占 16 B，因此 cacheline 可以包含 4 个 log 条目，一次 batch 处理可以刷新 16 个 log 条目。同时每个 cacheline 后添加 padding 保证 cacheline 对其，避免两次 batch 处理中存在对同一个 NVM 区域进行更新，减少延迟。
 
 ##### lazy-persist allocator
-log 条目中的 ptr 记录了已经分配的地址信息，因此可以懒惰的对分配器的元数据进行持久化。而分配器要求支持变长分配，因此采用了 Hoard-like lazy-persist allocator。
-- 将 NVM 分配成 4MB 大小的 chunk，再将 4MB 分成不同类别的 data block，同一个 chunk 中的 data block 属于同一个类别，这些数据块的大小信息被记录在每个 chunk 的头部中，用于分配，并且还用 bitmap 来跟踪未使用的 data block。这种设计，使得每个 chunk 是 4MB 对齐且 chunk 头部记录了存储的粒度，因此可以通过 ptr 直接计算出已经分配的 block 在 NVM 中的位置，从而可以恢复 bitmap。
-- 考虑到可扩展性，chunk 被划分给不同的核
+log 条目中的 ptr 记录了已经分配的地址信息，因此可以懒惰的对分配器的元数据进行持久化。并且将 NVM 块分成不同的大小，支持变长分配。
 
-Put 操作
-1. lazy-persist allocator 分配一个 data block，大规模数据进行持久化，小规模跳过
-2. 初始化 log 条目并持久化，添加到 log 尾部
-3. 在动态变化的索引结构中更新 log 条目相关的入口
-
-冲突一致性：通常需要进行异地更新，因此，除了上述的3个步骤之外，还需要释放原来的块，被释放的块可以立即使用（因为 read-after-delete 异常在 FlatStore 中不会发生，相同的 key 会被分配到同一个 server core 中，使用冲突队列进行串行化处理）
-
+先将 NVM 分配成 4MB 大小的 chunk，再将 4MB 分成不同大小类别的 data block。同一个 chunk 中的 data block 属于同一个类别，这些数据块的大小信息被记录在每个 chunk 的头部中，用于分配，并且还用 bitmap 来跟踪未使用的 data block。这种设计，使得每个 chunk 是 4MB 对齐且 chunk 头部记录了存储的粒度，因此可以通过 ptr 直接计算出已经分配的 block 在 NVM 中的位置，从而可以恢复 bitmap。
 
 ##### pipelined horizontal batching
-- 减少竞争，保证正确性的前提下，提前释放锁
-- 对 server core 进行编组，使得负载均衡
+每个 server core 能够从其他 core 窃取 log 条目，所有的 core 竞争一个全局锁保证同步互斥，并且为每个 core 建立一个可以核间通信的请求池
 
-在 Naive HB 的基础上发展而来。采用了以下方式：
-- 核之间的全局锁保证同步
-- 每个核的请求池可通信
-分三个阶段进行持久化：
+将 put 操作分三个阶段进行持久化：
 - l-persist：分配空间和持久化 KV 条目
 - g-persist：持久化 log 条目
 - volatile phase：更新变化的索引结构
+
 一旦某个核没能获取到全局的锁，就会轮询下一个到达的请求，开始执行第二个 Horizontal Batching。而获取到锁的核称为 leader core，它从其他的核收集了 log 条目之后立即释放锁。没有获取到锁的核异步的等待上一个 lead 核 完成的消息。
-Discussion：会对请求重新排序，因此在之后的 get 操作访问之前的 put 操作相同的 key 的数据可能会失败。为了解决这种问题，每个核会维护一个独占拥有的冲突队列来跟踪正在处理的请求。任何冲突的 key 的请求会被延迟。
-大量的核竞争全局锁时，会导致大量的同步开销。对几个核进行编组，组内的核竞争一个锁，几个组之间竞争全局锁。将同一个 socket 的核编组效果最佳。
+
+当前一个 put 操作还在 leader core 上处理，之后，对于同一个 key 的 get 操作不会分配到其他的 server core，而是在同一个 core 中，用冲突队列进行跟踪，对于冲突的操作请求，将会被推迟。
+
+大量的核竞争全局锁时，会导致大量的同步开销。对几个核进行编组，组内的核竞争一个锁，几个组之间竞争全局锁。
 
 ##### Log Cleaning
-避免 OpLog 随意增长，需要进行压缩，丢弃掉过时的 log 条目。每个核维护一个内存中的 table 来跟踪 OpLog 中指向的 4MB 的 chunk。
-每个组运行一个后台线程清理日志，因此，组与组之间可以并行。chunk 被回收取决于其内部存活的条目的比例和空闲块数量。在回收时，检查 reclaim list 找到 victim chunks。只需要比较 log 条目中的 version 字段与内存中索引即可判断。一个 chunk 内活跃的 log 条目会被复制到新分配的 NVM chunk 中。
+每个核维护一个内存中的 table 来跟踪 OpLog 中指向的 4MB 的 chunk。当 chunk 内部存活的条目的比例或者空闲块的数量达到一定比例时将会被回收。
 
+每个 HB 组运行一个后台线程清理日志，因此，组与组之间可以并行。在回收时，只需要比较 log 条目中的 version 字段与内存中索引即可判断是否存活。一个 chunk 内活跃的 log 条目会被复制到新分配的 NVM chunk 中，在将内存中的索引指向新的位置，旧的块被回收。chunk 的地址被记录在 journal field。
 
 ##### Recovery
-Recovery after a normal shutdown
-在关机之前，将变化的索引结构复制到 NVM 预先规定的区域，之后刷新每个 chunk 的 bitmap。再写入一个 shutdown 标记表示是正常关机。
+Recovery after a normal shutdown：在关机之前，将变化的索引结构复制到 NVM 预先规定的区域，之后刷新每个 chunk 的 bitmap。再写入一个 shutdown 标记表示是正常关机。
 
-Recovery after a system failure
-shutdown 标记不合法，则需要扫描 OpLog 恢复索引结构和 bitmap。1 billion（十亿） KV 条目只需要 40s。
-还支持 checkpoint
+Recovery after a system failure：shutdown 标记不合法，则需要扫描 OpLog 恢复索引结构和 bitmap。
 
 ### Results
 
-##### Empirical Study on Optane DCPMM
-结论：（每个写操作后都紧跟着是 clwb 和 mfence 指令，确保数据写到 Optane DCPMM 内部）
-- 高并发时，顺序和随机访问的带宽相似。从硬件的角度来看，高并发的顺序访问实际上等同于随机访问，每个线程都是在访问不同的地址（图中的带宽比实际带宽低是因为加入了刷新指令）
-- 当刷新同一个缓存行时，将会阻塞 800 ns，可能的两个原因：1）刷新指令实际上是异步的；2）Optane DCPMM 存在片上磨损均衡功能
-
 #### How is the design evaluted, what are the key results?
+Hash-based、Level-Hashing、CCEH 与 FlatStore-H 比较（每个核一个 Level-Hashing、CCEH；Hash-based 创建足够大的空间，在重新 hash 之前统计性能）；FPTree（STX B+树）、FAST-FAIR 与 FlatStore-M 比较。
+
+YCSB 上的 put 操作性能对比
+FlatStore-H：
+- FlatStore-H 吞吐量更高：1）其他两个每次更新都需要刷新索引条目、bitmap、和分配器中的 KV 记录；2）当两个 key 冲突时，Level-Hashing 需要 rehash 相关的条目，而 CCEH 需要分裂，会放大刷新时间；3）Pipelined HB 合并小规模的日志条目，通过批处理持久化，减少了写的次数。由于采取的冲突策略不同，CCEH 比 Level-Hashing 稍高
+- 在极端的测试场景下，FlatStore-H 性能表现更明显：1）Level-Hashing 和 CCEH 就地更新索引结构；2）pipelined HB 的并行性。在大规模 KV 场景下，pipelined HB 无效了。
+
+FlatStore-M：
+- 比 FlatStore-H 性能更明显（与其他两者的对比）
+- 由于 Masstree 的设计，FlatStore-M 比 FlatStore-FF 吞吐量更高；FlatStore-FF 比 FPTree 和 FAST-FAIR 高
+
+Facebook ETC Pool
+- FlatStore-H 和 FlatStore-M 均比其他的性能更好，FlatStore-M 更甚，因为 Masstree
+- 在 read/write 比例增大时，FlatStore-H 的性能与其他两者相似，而 FlatStore-M 性能仍比较突出，这是因为基于树，put 操作的开销不可忽略
+
+Multicore Scalability
+普通情况和极端情况下，在 core 达到 26 之前，几乎线性增长；当 core 继续增大时，PM 的带宽成为了瓶颈。
+
+Analysis of Each Optimization
+- compacted OpLog：（不使用 pipelined HB，仅实现 log 结构且一次只处理一个请求）平均比 CCEH 高 29.3%；
+- pipelined HB：（Naive HB 能窃取其他核的请求，但是不提前释放锁）在 value 较大时，一次刷新的 log 减少了，导致分摊下来的开销增大了
+- pipelined HB on latency：（Vertical Batching）client Batchsize 小的，两者性能相似，越大，Vertical Batching 延迟越高，同样延迟的情况下，pipelined HB 的吞吐量高
+
+Garbage Collection Overhead
+当触发 GC 时，性能只下降 10%，性能和 log 清理的速度都保持稳定：后端进程处理，不会阻塞处理 client 的请求；OpLog 轻量级，维护索引元数据的开销小；每个组的 GC 可以并行
 
 
-- 小规模的工作负载下， FlatStore 有更高的吞吐量。主要原因：1）其他两个每次更新都需要刷新索引条目、bitmap、和分配器中的 KV 记录；2）当两个 key 冲突时，Level-Hashing 需要 rehash 相关的条目，而 CCEH 需要分裂，会放大刷新时间；3）Pipelined HB 合并小规模的日志条目，通过批处理持久化，减少了写的次数
-- 天然适合扭曲的工作负载，不忙的核可以成为 leader 将忙碌的核中的请求收集进行批处理，而大规模的 KV 工作负载不再具有优势，因为它们仍然是在各自的核上进行持久化。
 
-
-- FlatStore-M 比 FlatStore-H 更好，加速比更高，tree 需要进行分裂合并，会增加写放大。
-- FlatStore-M 比 FlatStore-FF 好，FlatStore-FF 比其他的好
-
-##### Multicore Scalability
-
-
-#### What question do you have?
 
 
 
