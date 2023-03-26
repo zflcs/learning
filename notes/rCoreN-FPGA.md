@@ -1,3 +1,17 @@
+
+### FPGA 部署流程
+
+目前已经能够在 WSL 上运行模拟器，看到串口得输出了。
+
+#### 构建 vivado 项目
+按照[标签化 RISC-V fpga部署指南](https://github.com/LvNA-system/labeled-RISC-V/blob/master/fpga/README.md#run-with-fpga)的提示进行操作，目前仓库里已经增加了 zcu102 的补丁。
+
+因为 vivado 安装在 windows 上，之前曾经在 wsl 上启动过 windows 下的 vivado，所以按照这个思路修改环境变量试图直接在 wsl 中启动 windows 下的 vivado，没有成功。
+
+所以还是按照提示来进行，先执行一遍 `make project PRJ=myproject BOARD=zcu102` 指令，生成 pardcore，再下载到 windows 上。
+
+
+
 #### shell 响应慢
 初步怀疑和内核目前的调度方式相关，内核的调度以协程的形式来完成，因此在切换回原来的形式（初始化之后运行调度函数，只有核 0 处理内核协程）之后，shell 的响应速度正常。
 
