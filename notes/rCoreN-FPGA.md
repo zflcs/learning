@@ -8,7 +8,7 @@
 
 因为 vivado 安装在 windows 上，之前曾经在 wsl 上启动过 windows 下的 vivado，所以按照这个思路修改环境变量试图直接在 wsl 中启动 windows 下的 vivado，没有成功。
 
-所以还是按照提示来进行，先执行一遍 `make project PRJ=myproject BOARD=zcu102` 指令，生成 pardcore，再下载到 windows 上。
+所以还是按照提示来进行，先在 lrv 的 fpga 目录中执行一遍 `make -C pardcore BOARD=zcu102` 指令，生成 pardcore，再下载到 windows 上。
 
 
 
