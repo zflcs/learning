@@ -143,8 +143,9 @@ INFO: [Common 17-206] Exiting Vivado at Thu Mar 30 11:23:34 2023...
 
 最后将 system_top.bit 文件上传到 zcu102 linux 系统的 /boot 目录，重启系统烧入比特流后，执行了 rCore-N，能够正常运行。至此，成功完成了部署。
 
+zcu102 线上访问帮助 [ZCU102 远程访问调试 (shimo.im)](https://shimo.im/docs/Ee32MGGJ1vsYEMA2)，需要联系管理员开通权限。
 
-
+[启动 rCore-N 步骤](https://github.com/Gallium70/labeled-RISC-V-boot#labeled-risc-v-rust-bootloader--rcore-n)
 
 
 
