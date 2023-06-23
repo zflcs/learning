@@ -5,6 +5,23 @@
 
 
 ---
+##### 20230622
+- 使用petalinux 编译镜像，petalinux 2020.2 不支持 Ubuntu20.04
+- 尝试手动编译linux、uboot等
+
+##### 20230621
+- 在 wsl 中使用 vivado 和 vitis，暂时没有出现问题
+- 使用 petalinux 编译 linux 镜像运行
+	- 可能版本存在问题，不知道需不需要更换 glibc，或者单独对 yocto 下载的某个包的路径进行更换
+
+##### 20230620
+- 使用 AXU15EG 的 PS 侧串口与 windows 进行通信
+- 使用生成的 pac 写 xxv 驱动
+- 使用 windows 下的 vivado 生成加入 xxv_ethernet 的比特流时，出现错误
+	- 模块的名称过长
+	- IO管脚没有放置
+	- 决定在 wsl 中安装 vivado 2020.2，便于生成项目
+
 ##### 20230619
 - 学习 pac
 	- 先使用 svd2rust 生成对应的 lib.rs，再使用 form 移动到 src 目录中，最后使用 cargo fmt
