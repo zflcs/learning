@@ -5,6 +5,15 @@
 
 
 ---
+##### 20230623
+- 使用 2022.2 的版本，petalinux 能够正常编译（如果卡住，则 CTRL+C，再重新 petalinux-build）
+- 正常启动 linux，登录时出现问题，应该是没有设置启动参数
+	- 应该是 minicom 的问题，使用 putty 之后，能够正常登录
+- 将 SD 卡分区，一部分分区用于启动，另一部分分区制作根文件系统
+	- 卡在了向 sd 卡 ext4 分区制作根文件系统，使用 DiskGenius 可以向 ext4 写文件（需要收费，可以下载破解版）
+	- DiskGenius 写 ext4 时，出现了奇怪的问题，petalinux 制作的根文件系统无法写入软连接，在使用 busybox 制作的根文件系统可以写入，已经能够持久化了
+- 学习 PS 侧动态刷新 PL 侧比特流的方式
+
 ##### 20230622
 - 使用petalinux 编译镜像，petalinux 2020.2 不支持 Ubuntu20.04
 - 尝试手动编译linux、uboot等
