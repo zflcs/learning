@@ -5,6 +5,30 @@
 
 
 ---
+##### 20230628
+- 使用 fpga_manager 动态刷新 PL
+	- 终端显示成功刷上去了，但是并没有什么反应，也许是 PL 端的比特流存在问题，在 vivado 中进行仿真，发现，无论是否按下 key，led 始终为 0，测例实际上两个 GPIO 不是连接起来的，而是单独进行测试
+	- 尝试在 linux 下通过 sysfs 操作 GPIO
+		- 能够通过 GPIO 操作 PS 侧的 led 灯
+		- devmem 工具可以直接读写寄存器
+		- fpgautil 刷新 PL 之后，PL 侧的 led 灯从暗到常亮，done 指示灯从亮到不亮，使用 jtag 刷新之后现象相同，因此可以得出结论，使用 fpgautil 能够动态刷新 PL
+
+##### 20230627
+- PC 可以 ping 通板子，但是板子不能 ping 通 PC
+	- 打开防火墙之后，能够 ping 通
+- 没有真实的 ubuntu 机器操作 ext4，因此先制作 ramfs，之后在板子上的 arm 中把 rootfs 写到 sd 卡的 ext4 分区中
+- 尝试访问外网
+	- 尝试将 dhcp 移植到 rootfs 中，结果发现有 udhcpc 这个工具，插上网线，自动获取到 ip
+	- 能够 ping 百度，有 wget 工具，但是接下来是主机怎么远程访问板子
+		- ssh 远程访问应该没问题，在 wsl 中直接使用 ssh petalinux@ip地址即可访问开发板
+		- 目前只是在同一个局域网中访问，其他的方式，暂时没有尝试
+		- 通过 wget ifconfig.me 获取到公网ip，但是还需要路由器进行端口映射，才能通过公网ip访问
+- 动态更新 PL，可以使用 fpgautil 工具，暂未尝试
+	- 也许可以将比特流通过 ssh 上传到 arm 的 linux 中，之后使用 bootgen 工具手动生成 BOOT.bin 替换掉 sd 卡中的BOOT.bin，再 reset ，从而刷新 PL 侧比特流
+
+##### 20230626
+- 查找资料，尝试使用 Xilinx 的 xdevcfg 测试
+
 ##### 20230623
 - 使用 2022.2 的版本，petalinux 能够正常编译（如果卡住，则 CTRL+C，再重新 petalinux-build）
 - 正常启动 linux，登录时出现问题，应该是没有设置启动参数
@@ -12,6 +36,7 @@
 - 将 SD 卡分区，一部分分区用于启动，另一部分分区制作根文件系统
 	- 卡在了向 sd 卡 ext4 分区制作根文件系统，使用 DiskGenius 可以向 ext4 写文件（需要收费，可以下载破解版）
 	- DiskGenius 写 ext4 时，出现了奇怪的问题，petalinux 制作的根文件系统无法写入软连接，在使用 busybox 制作的根文件系统可以写入，已经能够持久化了
+	- petalinux 制作的 rootfs 在 windows 下转变成快捷方式，而 busybox 制作的 rootfs 则不是
 - 学习 PS 侧动态刷新 PL 侧比特流的方式
 
 ##### 20230622
