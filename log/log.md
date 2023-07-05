@@ -5,6 +5,62 @@
 
 
 ---
+##### 20230705
+- 动态刷新 PL 侧比特流以及增加 PS 设备树节点的操作流程，以 PS 端操作 gpio 控制 PL led 为例
+	- 在 vivado 中添加 axi_gpio ip 核，将管脚引出，并绑定到 led 上，synth、impl 生成比特流之后，导出硬件 xsa
+	- 使用 xsct dt_overaly.tcl system_wrapper.xsa psu_cortexa53_0 /opt/device-tree-xlnx/ overlay 生成设备树，包括 pl.dtsi
+	- 使用 dtc -O dtb -o pl.dtbo -b 0 -@ overlay/pl.dtsi 生成 dtbo
+	- 创建 bitstream.bif 文件，使用 bootgen -image bitstream.bif -arch zynqmp -o ./system_wrapper.bit.bin -w 生成 bin 文件
+	- 将 bin 与 dtbo 文件上传到 arm linux 里，在 arm 中使用 fpgautil -b system_wrapper.bit.bin -b pl.dtbo 刷新 PL 比特流以及增加 PS 侧设备树
+	- 在 /sys/class/gpio 中可以看到新增的一个 gpiochip，只有一个管脚，对应着 PL 的 led，之后通过 sysfs 的方式，完成对 PL 端 led 灯的控制
+- axu15eg 的手册上说 PL 端存在两个 led 灯，但是并没有看到第二个，这里应该是错误
+- 接下来考虑用 gpio 来复位 rocket
+- 写共享调度器文章
+	- 标题不太准确
+	- design 和 implementation 分开写，大致写了 design 部分
+
+##### 20230704
+- 写共享调度器文章
+- 写组成原理实验
+	- axu15eg 板子上的 key 和 led 较少，因此考虑使用串口来进行指令的输入和读取的数据输出
+		- 串口正常工作
+		- 写 alu 和 寄存器
+- 换了内存条之后，synth 和 impl 没有出现问题，成功生成了比特流
+	- 根据 bif 生成 bin 文件，因为 PS 和 PL 之间需要进行通信，因此需要把 uartlite 设备树节点增加到 PS 侧，需要生成 DTBO 文件
+	- DTBO 文件用 fpgautil 刷新时，卡住，原因未知，导出新的硬件，用 petalinux 构建，看设备树节点中是否存在增加的串口节点
+- 在 petalinux 中需要增加设备树节点
+	- linux 初始化报错  Serial: 8250/16550 driver, 4 ports, IRQ sharing disabled，应该是 axi_uartlite 节点中的信息设置错误，目前注释掉这个节点
+	- 使用 gpio 进行 load-and-reset 时，gpio 节点没有检测到，应该是内核编译时没有勾选驱动，仔细查找了之后发现，是 gpio-cell 设置不对，设置成 petalinux 生成的节点之后，在内核初始化时，卡住
+	- 通过 fpgautil 工具来增加设备树节点之后，能够看到设备节点，但是都没有作用
+
+##### 20230703
+- impl zcu102 时，注释掉了约束中的 debug 相关的连接，因此总是出错，暂时先不管
+- 尝试 PL 侧的开发，在 block design 中增加时钟 ip 核，之后利用引出的时钟，配置 led 灯闪烁，并进行动态刷新，经过测试没有问题
+- 尝试连接 rocketchip
+	- 在 block design 中增加 axi_uartlite 和 axi_uart16550 IP核，axi_uartlite 用于 PS 连接 PL，而 axi_uart16550 只在 PL 端使用
+	- 在 PS 中增加一个 slave axi 的接口，由 PL 端来读取 PS 端 DDR 中的数据
+- 还是使用脚本来生成 vivado 项目，之后在 block design 中修改 zynq 的配置
+	- 综合时，总是因为内存问题出错，需要增加内存
+	- impl soc 时，提示 IO 管脚过多，尝试把 DDR 的 AXI 接口从 128 位改成 32 位，如果对 system_wrapper 进行 synth 和 impl 不会出现这个问题
+
+##### 20230702
+- 查看 zcu102 的连接
+	- 猜测两个 concat ip 核是用于调试，而 axi_uart16550 是为了测试串口的外部中断
+	- axi_uartlite 则是 PS 与 PL 端的串口连接
+
+##### 20230701
+- 生成的 rocketchip_axu15eg.v 为 rocket 的软核，需要一层 system_wrapper 将其包括进去
+- 直接修改 tcl 来生成 vivado 项目似乎难度太大，先从 vivado 中配置好之后再到处 tcl
+
+##### 20230630
+- 在 axu15eg 上配置 rocketchip
+	- src/bd/soc.tcl 中配置了 ip
+
+##### 20230629
+- 开组会
+- 写 uintr-rocket-chip 的 axu15eg 支持
+	- vivado 中没有对应的 board part，修改 makefile 和 project_info.tcl 的 board_part 和 part 部分，执行 make init 和 make build，在 axu15eg/src/hdl 目录下生成 rocketchip_axu15eg.v 和 system_wrapper.v 文件
+
 ##### 20230628
 - 使用 fpga_manager 动态刷新 PL
 	- 终端显示成功刷上去了，但是并没有什么反应，也许是 PL 端的比特流存在问题，在 vivado 中进行仿真，发现，无论是否按下 key，led 始终为 0，测例实际上两个 GPIO 不是连接起来的，而是单独进行测试
@@ -12,6 +68,7 @@
 		- 能够通过 GPIO 操作 PS 侧的 led 灯
 		- devmem 工具可以直接读写寄存器
 		- fpgautil 刷新 PL 之后，PL 侧的 led 灯从暗到常亮，done 指示灯从亮到不亮，使用 jtag 刷新之后现象相同，因此可以得出结论，使用 fpgautil 能够动态刷新 PL
+- 生成 lrv 的 vivado 项目
 
 ##### 20230627
 - PC 可以 ping 通板子，但是板子不能 ping 通 PC
