@@ -5,6 +5,35 @@
 
 
 ---
+##### 20230712
+- 画图
+- 写小论文
+
+##### 20230711
+- 画图
+- 写文章
+
+##### 20230710
+- 写 pa1
+
+##### 20230709
+- 组成原理的实验指导过于简单，以至于有点无从下手
+- 计划跟着 ysyx 完成组成原理的实验
+
+##### 20230708
+- 将 fw_payload.bin 使用 load-and-reset 脚本写到内存之后，使用 devmem 读取 0x10000000 内存，确实写进去了
+- 而使用 ila 抓取 araddr 为 0x10000000，rdata 为 00010297007e3023fa0e0e130000fe17，还不明确其具体的含义
+	- 使用不同的 fw_payload.bin 抓取出来的 rdata 不同，但是总是只有一个周期
+	- 估计 DDR 应该是能正常工作
+- bootrom 为固件，其中有个打开 led 灯的操作，这里我没有绑定到 led，绑定 led，修改高低电平，查看 reset 时是否会出现 led 灯亮
+- 跟换 led 的管脚到另一个 axi gpio 之后，led 灯并没有亮，因此推测问题出现在没有启动 rocket，并没有进行复位执行 bootrom 代码，但是 DDR 中搬运了东西
+
+##### 20230706
+- 组会
+- 调试 rocketchip
+	- system_wrapper 中增加 markdebug 属性，综合之后添加 debug 约束，导出硬件，在 vitis 中创建一个 hello 项目，编译运行之后，在 vivado 中打开 hardware manager 进行调试
+	- 不能在 system-user.dtsi
+
 ##### 20230705
 - 动态刷新 PL 侧比特流以及增加 PS 设备树节点的操作流程，以 PS 端操作 gpio 控制 PL led 为例
 	- 在 vivado 中添加 axi_gpio ip 核，将管脚引出，并绑定到 led 上，synth、impl 生成比特流之后，导出硬件 xsa
