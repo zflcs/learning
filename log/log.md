@@ -5,6 +5,62 @@
 
 
 ---
+##### 20230719
+- 修改 IP 核配置，仅仅为 MAC，不包含 PCS/PMA
+	- PCS/PMA 必须使用156.25MHz差分时钟，只使用 MAC 的话可以使用 156.25MHz 的单端时钟
+	- 之前在修改了 soc 的 part 信息之后无法生成 vivado 项目的原因也是因为这个时钟绑定的管脚的问题
+- 翻译文章
+    - 修改了状态转换模型的图
+    - 翻译完第三章的部分
+    - 阅读论文的整体，进行修改
+
+
+##### 20230718
+- 修改 vivado 项目
+	- 使用 OBUFDS 原语能够成功 synth，但是 impl 失败，报错 [Opt 31-1] OBUFDS OBUFDS_inst O pin is not connected to a top-level port. IBUFDS 和 OBUFDS 原语的输入输出只能连接到外部的管脚，不能连接到 FPGA 内部
+	- 打开 elaborated design 配置 gt_ref_clk 时，不能选择 PL 200M 参考时钟的管脚
+	- 时钟的问题，在内部使用 OBUFDS 出现上述报错，如果连接到顶层模块又会报错多个驱动，似乎没有什么好的解决办法了
+- 把 PL 的串口输入输出连到 PL 的串口，方便之后的调试
+- petalinux 的 rootfs 中可以配置 minicom，不需要手动移植，但是没有找到 tmux
+- 使用单端时钟手动生成差分时钟，仍然不行
+	- 使用 utility buffer IP 核只能生成 100MHz 的频率
+
+##### 20230717
+- 添加 xxv
+	- 不修改 zcu102 的 part 和 board_part 参数生成 vivado 项目，在 settings 中修改 part 为 xczu15egvb1156-2-i，更新所有 IP
+	- 修改 zynq 的配置，修改管脚约束，在设置 gt_ref_clk_clk_p 管脚时遇到问题，zcu102 使用了USER_MGT_SI570_CLOCK2_C_P 管脚（在 zcu102 手册中 clock generate 部分），这个在 axu15eg 上应该时没有提供的，因此可能需要使用 PL 侧的 200M 的差分时钟来生成
+	- 在修改 clocking wazird IP 核时，因为管脚名称格式错误的原因出错
+	- system_wrapper.v 中多了几个 AXI 的管脚，去掉之后，能够正常综合
+	- 在约束文件中添加 create_clock -period 6.400 [get_ports gt_ref_clk_clk_p] 创建一个 156.25MHz 的时钟
+	- 正常完成了 impl，但是 write_bitstream 还需要添加许可证，需要重新生成 soc，但是因为没有绑定 gt_ref_clk_clk_p 管脚失败了
+	- 没有光纤模块，需要购买，可以买一个光电转换的接口
+- PL 侧只有 200M 的差分时钟，而 xxv 需要的是 156.25M 的，因此在 block design 中到处一个 156.25M 的时钟，之后在 system_wrapper 中通过 OBUFDS 原语得到对应的差分时钟
+
+##### 20230716
+- 调试 axu15eg
+	- ip a add 192.168.10.2/24 dev eth0 设置局域网内的 ip 地址
+	- 把 S_AXI_HP0_FPD 和 M_AXI_HPM0_FPD 的数据位宽设置为 64 位，将 led 绑定到 rocket 复位信号
+	- 启动了 rocket，在 pl 的串口看到了 opensbi 的输出信息，但是 opensbi 卡在了打印 Domain0 Region03 的位置，原因尚不明确
+	- axu15eg 需要保持复位信号为低电平，与 zcu102 不同，因此 reset.sh 脚本中的 sleep 前后向 gpio 输出的值需要反过来，现在能够成功运行 rocket 并且进入 riscv-linux
+- 写 ysyx riscv64M指令
+- 交叉编译 tmux 和 minicom，但是出现问题，tmux 交叉编译出现 Conflicting types of forkpty，是因为用 apt 安装了 pkg-config
+- 原本计划再另外创建一个分支用于添加 xxv，但使用 axi_xxv_nic 分支里 zcu102 的 soc.tcl 不能生成 vivado 项目，报错 ERROR: [BD 5-106] Arguments to the connect_bd_intf_net command cannot be empty. 因此在目前的分支上手动添加 xxv_ethernet
+- 将 rocket 改成 4核 100M 之后，能够进行初始化，但是卡在了执行 run /init 部分，应该是修改了 plic 外部中断的原因
+- tmux 移植到开发板上报错： need UTF-8 locale (LC_CTYPE) but have ANSI_X3.4-1968
+- 不修改 part 和 board_part 参数，先生成 vivado 项目
+
+##### 20230715
+- 实现了所有的 riscv64I 指令，在运行 bit 测例时出现问题，lbu 访存地址越界，因为 add 指令实现导致的问题，结果是因为没有对 R 型指令进行解析（无语）
+	- 不能通过 div（divw）、fact（mulw）、goldbach（remw）、hello-str、leap-year（remw）、matrix-mul、mersenne、mul-longlong、prime、recursion、shuixianhua、string、wanshu
+
+##### 20230714
+- 写 pa2 的指令解析，通过基础测试程序
+
+##### 20230713
+- 组会
+- 发现 DDR 的 AXI 数据位宽存在问题，不应该与 system_wrapper 中的位宽对其，而是应该看 rocket 内的数据位宽
+- 写 ysyx pa2
+
 ##### 20230712
 - 画图
 - 写小论文
