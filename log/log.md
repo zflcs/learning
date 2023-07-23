@@ -5,6 +5,20 @@
 
 
 
+##### 20230723
+
+- 讨论：使用千兆以太网的接口，因此只能使用 AXI 1G/2.5G Ethernet IP 核
+- 看了 Alinx 提供的例子的连接方式，要在 vitis 上进行测试，需要进行修改的部分较多，既然 petalinux 能够使用网口正常工作，那么 xilinx-linux 一定提供了相应的驱动，因此可以先不跑一遍官方例子，先进行连线
+- rocket 使用 AXI 1G/2.5G Ethernet IP 核
+    - 去掉了无用的 axi_gpio，增加 dma 和 ethernet，其 slave 接口连接到 rocket_mmio 模块，dma 的 master 接口连接到 AXI SmartConnect 模块，最终 AXI SmartConnect 的输出导出成外部接口连接在 rocker 的 l2 前端总线上
+    - ethernet 和 dma 共有 4 个终端信号，连接到 ext_intrs 信号上
+    - 在约束文件中绑定管脚，综合成功，但是关于 mdio 的连接方式出现问题，soc 里导出的 mdio 的三个输出管脚需要在 system_wrapper 中使用 IOBUF 转换成 inout 的管脚，成功生成了比特流，刷到板子上能够检测到设备以及驱动，但驱动不匹配，报错 "XXV MAC block lock not complete! Cross-check the MAC ref clock configuration"，但是能识别出设备，能够启动 lo 和 eth0，可以 ping 自己，但是不能 ping PC，PC ping 开发板会提示 "icmp_seq=3 Destination Host Unreachable"
+    - 对比了 linux-xlnx 以及目前使用的网卡驱动，问题应该不在网卡驱动，在于设备树
+    - [linux-xlnx/Documentation/devicetree/bindings/net/xilinx_axienet.txt at master · Xilinx/linux-xlnx (github.com)](https://github.com/Xilinx/linux-xlnx/blob/master/Documentation/devicetree/bindings/net/xilinx_axienet.txt)以及[Linux AXI Ethernet driver - Xilinx Wiki - Confluence (atlassian.net)](https://xilinx-wiki.atlassian.net/wiki/spaces/A/pages/18842485/Linux+AXI+Ethernet+driver)记录了设备树的写法，对比这部分内容修改 rocket 的设备树
+    - 修改设备树之后，没有进行设备初始化，总线上没有检测到设备？？？
+
+
+
 ##### 20230722
 
 - 启动时能看到网络相关的协议栈的信息的初始化，但是 reset 网卡时报错时钟问题
@@ -17,6 +31,7 @@
     - 修改当前的 IP 核的选项，将 GT subcore 不包括进去，另外进行处理
     - 另外使用时钟板提供时钟
     - 换成 AXI 1G/2.5G IP 核
+- GTH 高速收发器可以是因为底板上有 125MHz 的差分晶振
 
 
 
