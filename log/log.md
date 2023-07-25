@@ -5,6 +5,17 @@
 
 
 
+##### 20230724
+
+- 先创建新的工程，将 ip 连接到 PS 侧，之后生成设备树，根据这个设备树，内核在初始化时，仍然无法匹配到，问题应该还是在 fpga 内部的实现
+- 删除 ethernet 和 dma 模块，重新连接，生成比特流时出现错误![image-20230724170543519](./assets/image-20230724170543519.png)
+- 根据官方的以太网例子，在生成比特流时报了同样的错误，并且 lwip echo server 不能工作
+- 阅读 AXI 1G/2.5G Ethernet IP 核手册，根据第 48 页，ref_clk 管脚在 7 系列的板子上使用 200M 的时钟，在 UltraScale+ 上需要使用 300-1300M 的时钟，上面频率不匹配的 critical warning 解决了，但仍然报告 design failed，“failed to meet the timeing requirements”，lwip echo server 仍然不能正常工作，直接使用官方提供的例子的 xsa 创建 vitis 项目也不行
+- 打开 edit time constraints，根据报错信息，在 xdc 约束文件中设置对应管脚的 delay 信息，还是存在 setup 时序违例，不知道怎么 debug![image-20230724231421580](./assets/image-20230724231421580.png)
+- 根据手册 139 也设置 REFCLK_FREQUENCY 属性为 333.333M 仍然出现报错，这个时序问题暂时无法解决
+
+
+
 ##### 20230723
 
 - 讨论：使用千兆以太网的接口，因此只能使用 AXI 1G/2.5G Ethernet IP 核
