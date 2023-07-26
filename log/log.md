@@ -5,6 +5,44 @@
 
 
 
+##### 20230726
+
+- 开会讨论
+    - 优先移植 rCore-N，完成实验
+    - 放平心态 debug
+    - 跑通 Alinx 官方的例子
+- 再按照官方例子跑一遍，忽略时序违例
+    - 使用 333M ref_clk ，仍然是无法正常工作，不能输出结果![image-20230726102434033](./assets/image-20230726102434033.png)
+    - 使用 200M ref_clk，与上述相同
+    - 观察到速度比较奇怪，仔细对比了 PL 和 PS 侧两端的 lwip 修改，发现教程的获取速度的函数没有返回![image-20230726135229406](./assets/image-20230726135229406.png)
+- 将官方测例移植到 rocket 上
+    - 按照之前的方式连接好后，启动时没有设备初始化的操作，尽管 xxv 的驱动代码的 compatible 内有 “xlnx,axi-ethernet-1.00.a”，但是并不会匹配到总线上的设备
+    - 切换回没有修改过以太网驱动的 linux commit，这次初始化时能够看到网卡初始化，但始终出现 ![image-20230726202728791](./assets/image-20230726202728791.png)
+    - 对比了 linux-xlnx 的 __axienet_device_reset 函数，发现两者之间代码差距较大，移植 linux-xlnx 的驱动到 TKF 改过的 linux 中
+        - netif_napi_add 函数最后需要多加一个 NAPI_POLL_WEIGHT 参数
+        - 报错![image-20230726204638970](./assets/image-20230726204638970.png)
+        - 设备树中增加 phy-handle 属性之后，初始化时没有报错，但是在之后报错![image-20230726205557208](./assets/image-20230726205557208.png)
+        - 将 phy 设备树节点添加到 mdio 节点之后，报错![image-20230726220600110](./assets/image-20230726220600110.png)
+        - 根据这个帖子 [(24条消息) [linux kernel\] 内核下ksz9031驱动调试踩过的坑_mdio device at address 1 is missing_weixin_43771853的博客-CSDN博客](https://blog.csdn.net/weixin_43771853/article/details/115482565) 的信息，在内核 menuconfig 中把 Micrel PHY 驱动勾选上，之后仍然出现上述报错，在依次修改了设备树中 phy 节点的 reg 信息为 7， 0 之后，终于能正确的启动网卡
+    - PC 和 rocket 相互之间 ping 通，并且能够通过 nc 发送消息
+- 写学期总结
+
+
+
+##### 20230725
+
+- 暂时先不管这个时序问题了，先把 ysyx 以及 rCore-N 移植做完
+- 做 ysyx，pa2 的 fact、mersenne、matrix-mul、mul-longlong 还不能通过，找 bug，之前写的 sltiu 指令解析存在错误，改成正确的之后，导致 div 以及其他的测例不能通过
+- 寻求其他人的帮助，吴老师说时序应该不影响，问题在于其他地方
+    - 仔细对比了用户手册的管脚，没有出现问题
+- 与 yyy 讨论，关于 xxv 以太网驱动
+    - 画板子，接时钟芯片
+    - fmc 转 sfp 扩展板上可能有时钟
+    - hack clock wizard（已经尝试过）
+    - 物理 hack，跳线，可能导致信号质量爆炸
+
+
+
 ##### 20230724
 
 - 先创建新的工程，将 ip 连接到 PS 侧，之后生成设备树，根据这个设备树，内核在初始化时，仍然无法匹配到，问题应该还是在 fpga 内部的实现
