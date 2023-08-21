@@ -5,6 +5,20 @@
 
 
 
+##### 20230821
+
+- 在第一次启动时出现了 ethernet 的 interrupt 中断，之后的每次启动只出现 dma 的 s2mm 中断，好像上一次启动的的状态影响到了下一次，外设 reset 似乎存在问题
+- 重新写的裸机环境有问题，直接在 rv-csr-test 上进行修改，再来测试
+- 在 example 中应该先初始化 dma，再初始化 ethernet（参考 lwip 里初始化的先后顺序），这里能够检测到 s2mm 中断，并且对应的 rx_cplt 标志位是正确的
+    - example 的逻辑还是存在问题，在等待 tx_frame 时仍然陷入死循环，可能是 local_loop_back 的问题![image-20230821141804308](./assets/image-20230821141804308.png)
+    - dma 只打开 rx 的中断，设置 rx ring，不管有没有进入 local_loopback，都能收到一个广播的包，这个是 windows 网卡的 mac 地址，也就是说，现在能够收到来自 windows 上的网络包，通过 wireshark 抓包，可以看到对应的 DHCP 请求![image-20230821233248205](./assets/image-20230821233248205.png)![image-20230821233004976](./assets/image-20230821233004976.png)
+    - dma 只使能 tx 的中断，设置 tx ring 向外发送帧，不使用 local_loopback，偶然情况下，等待几分钟后出现 interrupt 中断
+- 手册里的 TEMAC 的中断寄存器的地址与 Xilinx 官方的裸机驱动仓库不一致
+- 阅读 axiethernet 手册和 tri-mode-eth-mac 手册，都没有提到 programming sequence
+- 阅读 axidma 手册
+
+
+
 ##### 20230820
 
 - 修改论文，画图
