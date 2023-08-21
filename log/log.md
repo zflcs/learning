@@ -5,6 +5,13 @@
 
 
 
+##### 20230820
+
+- 修改论文，画图
+- 阅读 axi-ethernet 手册
+
+
+
 ##### 20230819
 
 - 修改论文，讨论 background & motivation、 design 部分
