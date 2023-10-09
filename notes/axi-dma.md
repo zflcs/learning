@@ -31,7 +31,11 @@
 
 
 
+所有需要使用 dma 传输的缓冲区的生命周期应该都是 ‘static 的，或者在 submit 时交给 dma，from_hw 时进行回收
 
+可以使用 embedded-dma 中定义的 trait
+
+submit 时将缓冲区给 DMA，并且将其 forget 不释放所有权，因此 dma 可以传输，在 from_hw 时，从块描述符中读取到引用，在这个时候进行释放
 
 
 

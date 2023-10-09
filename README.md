@@ -5,7 +5,7 @@
 
 - 阅读文献笔记见 [articles](articles)
 
-- 学习日志见 [log](log/log.md)
+- 学习日志见 [log 目录](log/)
 
 - 学习笔记见 [notes](notes)
 
