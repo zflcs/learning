@@ -3,7 +3,7 @@ tags: []
 parent: 'ZygOS: Achieving Low Tail Latency for Microsecond-scale Networked Tasks'
 collections:
     - 硕士毕业阅读文献
-version: 6023
+version: 6032
 libraryID: 1
 itemKey: H88SM847
 
@@ -89,6 +89,8 @@ IPI 保证remote system call 能及时执行：内核禁用中断，中断处理
 ## Implementation
 
 Idle loop polling logic：只有所有队列都空时，核心才处于空闲状态，按照顺序轮询队列。（当其他的空闲核在检测到网卡硬件队列中存在待处理数据包，且主核正在用户态执行，则积极发送 IPI ？？？）
+
+![\<img alt="" data-attachment-key="33RN2SC6" width="1267" height="561" src="attachments/33RN2SC6.png" ztype="zimage">](attachments/33RN2SC6.png)
 
 ## 中间测试没有看
 
