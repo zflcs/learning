@@ -3,7 +3,7 @@ tags: []
 parent: 'An Efficient O(1) Priority Queue for Large FPGA-Based Discrete Event Simulations of Molecular Dynamics'
 collections:
     - 硕士毕业阅读文献
-version: 6217
+version: 6444
 libraryID: 1
 itemKey: AM9AN4UD
 
