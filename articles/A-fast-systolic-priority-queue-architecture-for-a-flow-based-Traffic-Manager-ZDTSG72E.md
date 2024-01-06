@@ -3,7 +3,7 @@ tags: []
 parent: 'A fast systolic priority queue architecture for a flow-based Traffic Manager'
 collections:
     - 硕士毕业阅读文献
-version: 6500
+version: 6697
 libraryID: 1
 itemKey: ZDTSG72E
 
@@ -18,7 +18,7 @@ itemKey: ZDTSG72E
 
 ## The Systolic Array priority queue
 
-![\<img alt="" data-attachment-key="IVYESBZI" width="616" height="314" src="attachments/IVYESBZI.png" ztype="zimage">](attachments/IVYESBZI.png)
+![\<img alt="" width="616" height="314" data-attachment-key="IVYESBZI" src="attachments/IVYESBZI.png" ztype="zimage">](attachments/IVYESBZI.png)
 
 入队：新包将与顶部的两个包参与决策，决定存储的内容，以此向下传递。
 
@@ -26,10 +26,12 @@ itemKey: ZDTSG72E
 
 ## Experimental Results
 
-![\<img alt="" data-attachment-key="EGD76TFP" width="658" height="495" src="attachments/EGD76TFP.png" ztype="zimage">](attachments/EGD76TFP.png)
+![\<img alt="" width="658" height="495" data-attachment-key="EGD76TFP" src="attachments/EGD76TFP.png" ztype="zimage">](attachments/EGD76TFP.png)
 
-![\<img alt="" data-attachment-key="EPIMR6DA" width="651" height="314" src="attachments/EPIMR6DA.png" ztype="zimage">](attachments/EPIMR6DA.png)
+![\<img alt="" width="651" height="314" data-attachment-key="EPIMR6DA" src="attachments/EPIMR6DA.png" ztype="zimage">](attachments/EPIMR6DA.png)
 
-![\<img alt="" data-attachment-key="EZKJPS5T" width="651" height="457" src="attachments/EZKJPS5T.png" ztype="zimage">](attachments/EZKJPS5T.png)
+![\<img alt="" width="651" height="457" data-attachment-key="EZKJPS5T" src="attachments/EZKJPS5T.png" ztype="zimage">](attachments/EZKJPS5T.png)
+
+ 
 
 #### 可能的缺点：开发板能不能支撑 Queue 深度增加后占用的资源与 RISC-V 软核占用的资源
