@@ -65,4 +65,24 @@
    ![](./zotero%E5%B8%AE%E5%8A%A9.assets/%E6%96%87%E7%8C%AE%E7%9B%B8%E5%85%B3%E4%BF%A1%E6%81%AF2.png)
 
    
+### zotero 插件
+
+#### `pdf-translate` 
+安装操作详见 https://github.com/windingwind/zotero-pdf-translate#readme
+
+#### `better notes` 插件
+
+安装操作与 `pdf-translate` 相同，github 仓库 https://github.com/windingwind/zotero-better-notes
+
+##### 笔记同步
+
+创建笔记后将其导出至目的路径下，需要设置自动同步。此后，记录文献笔记可直接在 zotero 中进行，并且目的路径下的文件也会进行同步，可以手动将本地备份的文件推送到 github
+
+1. 导出笔记
+![Alt text](./zotero帮助.assets/export_markdown.png)
+![Alt text](./zotero帮助.assets/export_settings.png)
+
+2. 选择本地位置，可以是本地的 github 仓库，之后再手动推送至 github，这样即可保证 zotero 一份笔记，github 存在另一份备份。
+   
+3. 一旦导出的文件设置好同步之后，还可以利用 zotero 软件本身的多设备同步的特性。在图书馆看论文时，在 ipad 或者便携设备上记录的笔记，zotero 软件本身将会自动同步到宿舍的电脑上，宿舍电脑上的 zotero 再同步到宿舍电脑的本地仓库中（宿舍电脑需要打开 zotero）。
 
