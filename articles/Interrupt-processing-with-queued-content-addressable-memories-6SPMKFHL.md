@@ -3,7 +3,7 @@ tags: []
 parent: 'Interrupt processing with queued content-addressable memories'
 collections:
     - 硕士毕业阅读文献
-version: 7002
+version: 7415
 libraryID: 1
 itemKey: 6SPMKFHL
 
@@ -113,3 +113,5 @@ overhead：IP 中接收请求的间隔为 1.4微秒，因此中断处理的开�
 文中提到的设计应该是一种类似于任务调度的部件，设计的目的是保证了不会导致高优先级的中断服务例程长期占用 CPU。
 
 主要的工作是对多种中断的管理。
+
+整体来看，这个文章的工作应该是定义了一个中断缓冲机制，同一优先级的中断将会缓存在这个 CAM queue 中。

@@ -3,7 +3,7 @@ tags: []
 parent: 'Parallel, hardware-supported interrupt handling in an event-triggered real-time operating system'
 collections:
     - 硕士毕业阅读文献
-version: 7346
+version: 7414
 libraryID: 1
 itemKey: VJHQGH6T
 
@@ -29,6 +29,10 @@ itemKey: VJHQGH6T
 PCP 修改调度器中任务的状态，但只有优先级高的中断任务转化为就绪时，才通知 CPU 进行重调度。
 
 ![\<img alt="" data-attachment-key="DYE8KV39" width="782" height="1129" src="attachments/DYE8KV39.png" ztype="zimage">](attachments/DYE8KV39.png)
+
+## Overhead
+
+![\<img alt="" data-attachment-key="I9YVDPCT" width="536" height="200" src="attachments/I9YVDPCT.png" ztype="zimage">](attachments/I9YVDPCT.png)
 
 ## Discussion
 
