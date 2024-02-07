@@ -3,7 +3,7 @@ tags: []
 parent: 'Diplomatic Design Patterns: A TileLink Case Study'
 collections:
     - rocket-chip
-version: 7989
+version: 8040
 libraryID: 1
 itemKey: 3JDSNLS8
 
@@ -47,9 +47,9 @@ Diplomacy 外交是独立于总线协议的，因为任何具有参数化功能�
 
 TileLink 设计用于部署在片上系统 (SoC) 中，以连接通用多处理器、协处理器、加速器、缓存、DMA 引擎、内存控制器以及简单或复杂的外围设备。
 
-![\<img alt="" data-attachment-key="UPNFMD5V" width="1284" height="522" src="attachments/UPNFMD5V.png" ztype="zimage">](attachments/UPNFMD5V.png)
+![\<img alt="" data-attachment-key="VDAW3BPR" width="1284" height="522" src="attachments/VDAW3BPR.png" ztype="zimage">](attachments/VDAW3BPR.png)
 
-![\<img alt="" data-attachment-key="LMWTXNGF" width="606" height="449" src="attachments/LMWTXNGF.png" ztype="zimage">](attachments/LMWTXNGF.png)
+![\<img alt="" data-attachment-key="4TAVWWID" width="606" height="449" src="attachments/4TAVWWID.png" ztype="zimage">](attachments/4TAVWWID.png)
 
 #### Five logical channels
 
@@ -81,3 +81,25 @@ TileLink 死锁保证源自：
 2.  层次扩展性（有向无环图）
 3.  严格优先级通道
 4.  通过 decoupled 接口转发
+
+### Design Patterns
+
+#### DRYing Out Parameterization
+
+参数化生成器提高了传统 HDL 的生产力，但参数本身也成为了非正交复杂性的来源。
+
+使用 Diplomacy 不需要显示指定参数，可从有向无环图中推断出参数信息。
+
+#### Hardware Generation with A View
+
+主节点可以查看其内存映射地址可见的所有从节点的功能。
+
+相反，从站可以看到所有操作可以到达他们的主站的能力。
+
+当某些主设备需要缓存时，可以使用五个通道；当不需要缓存时，可以省略其余的通道，按需使用。
+
+### Correct By Composition
+
+1.  combinational composition: 可以通过组合多个小型适配器来创建更大的逻辑适配器，以实现完整的功能，而各个适配器可以相互独立地进行单元测试和验证。
+2.  sequential composition
+3.  hierarchical composition

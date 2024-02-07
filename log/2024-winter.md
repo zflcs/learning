@@ -1,5 +1,10 @@
 ### 2024 寒假日常
 
+##### 20240205
+
+- 阅读论文 Diplomatic Design Patterns: A TileLink Case Study
+- 阅读 rocket-chip 文档
+
 ##### 20240202
 
 - 意识到了另一种对我来说的快乐
