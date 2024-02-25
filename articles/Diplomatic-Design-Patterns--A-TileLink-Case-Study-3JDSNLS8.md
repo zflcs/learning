@@ -3,7 +3,7 @@ tags: []
 parent: 'Diplomatic Design Patterns: A TileLink Case Study'
 collections:
     - rocket-chip
-version: 8040
+version: 8044
 libraryID: 1
 itemKey: 3JDSNLS8
 
@@ -22,7 +22,7 @@ itemKey: 3JDSNLS8
 
 节点和边组成的有向图。
 
-![\<img alt="" data-attachment-key="W9MDZJJD" src="attachments/W9MDZJJD.png" ztype="zimage">](attachments/W9MDZJJD.png)
+![\<img alt="" data-attachment-key="W9MDZJJD" width="1306" height="553" src="attachments/W9MDZJJD.png" ztype="zimage">](attachments/W9MDZJJD.png)
 
 #### Diplomacy Adapter Parameters
 
@@ -47,9 +47,9 @@ Diplomacy 外交是独立于总线协议的，因为任何具有参数化功能�
 
 TileLink 设计用于部署在片上系统 (SoC) 中，以连接通用多处理器、协处理器、加速器、缓存、DMA 引擎、内存控制器以及简单或复杂的外围设备。
 
-![\<img alt="" data-attachment-key="VDAW3BPR" src="attachments/VDAW3BPR.png" ztype="zimage">](attachments/VDAW3BPR.png)
+![\<img alt="" data-attachment-key="VDAW3BPR" width="1284" height="522" src="attachments/VDAW3BPR.png" ztype="zimage">](attachments/VDAW3BPR.png)
 
-![\<img alt="" data-attachment-key="4TAVWWID" src="attachments/4TAVWWID.png" ztype="zimage">](attachments/4TAVWWID.png)
+![\<img alt="" data-attachment-key="4TAVWWID" width="606" height="449" src="attachments/4TAVWWID.png" ztype="zimage">](attachments/4TAVWWID.png)
 
 #### Five logical channels
 
