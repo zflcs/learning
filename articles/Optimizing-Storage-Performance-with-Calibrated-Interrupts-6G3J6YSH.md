@@ -3,7 +3,7 @@ tags: []
 parent: 'Optimizing Storage Performance with Calibrated Interrupts'
 collections:
     - 中断
-version: 8891
+version: 9004
 libraryID: 1
 itemKey: 6G3J6YSH
 
@@ -112,3 +112,56 @@ cinterrupt 算法增加了 Urgent 和 Barrier 注释
 完整的 cinterrupt 算法：
 
 ![\<img alt="" data-attachment-key="W3U2XLE8" width="608" height="658" src="attachments/W3U2XLE8.png" ztype="zimage">](attachments/W3U2XLE8.png)
+
+## Implementation
+
+### Software Modifications
+
+修改内核，设置默认注释。
+
+针对让用户进程阻塞的系统调用标记为 Urgent，而支持异步的系统调用则标记为 Barrier。
+
+### Hardware Modifications
+
+由于硬件设备的队列存在限制，因此不能使用专门的 Urgent 队列来处理带有 Urgent 标记的请求。
+
+最终使用的模拟方案：
+
+专用核心运行在 NVMe 设备驱动程序中创建的固定内核线程，该线程轮询目标核心的完成队列并根据算法 2 生成 IPI。
+
+![\<img alt="" data-attachment-key="F8ILIRAL" width="600" height="419" src="attachments/F8ILIRAL.png" ztype="zimage">](attachments/F8ILIRAL.png)
+
+cinterrupt 注释嵌入到请求 ID 中，关闭了目标核分配的 NVMe 队列中断。
+
+## Evaluation
+
+每个核心都分配有自己的 NVMe 提交和完成队列。
+
+模拟中断带来的开销为 3-6%
+
+### Microbenchmarks
+
+![\<img alt="" data-attachment-key="29ZVHJQ6" width="600" height="465" src="attachments/29ZVHJQ6.png" ztype="zimage">](attachments/29ZVHJQ6.png)
+
+同步工作负载通过 read 提交阻塞 4 KB 读取。异步工作负载通过 libaio 提交 4 KB 读取，io深度为 256，批次大小为 16。
+
+1.  Cinterrupts 与默认的同步延迟相匹配，同时实现了高达 35% 的异步吞吐量提高；与自适应的异步吞吐量相匹配，同时实现了高达 37% 的低延迟。
+2.  当未触发时，OOO 不会增加 cinterrupts 性能的开销。
+
+### Macrobenchmarks
+
+### RocksDB
+
+![\<img alt="" data-attachment-key="QQSY5ENF" width="603" height="284" src="attachments/QQSY5ENF.png" ztype="zimage">](attachments/QQSY5ENF.png)
+
+### KVell
+
+![\<img alt="" data-attachment-key="YWPNGJVC" width="620" height="617" src="attachments/YWPNGJVC.png" ztype="zimage">](attachments/YWPNGJVC.png)
+
+## Cinterrupts for Networking
+
+困难：
+
+1.  修改单台机器不足够，收发都需要进行修改，且任何中断驱动的软件路由器也需要支持 cinterrupt
+2.  网络分层协议，直接套用 NVMe 的 cinterrupt 不可行，NIC 可能会看不到 cinterrupt 的信息，否则就需要逐层传递 cinterrupt 信息
+3.  Ethernet 协议头部没有可用于传递 cinterrupt 信息的保留字段
