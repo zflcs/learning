@@ -3,7 +3,7 @@ tags: []
 parent: 'Less Is More: Trading a Little Bandwidth for {Ultra-Low} Latency in the Data Center'
 collections:
     - 中断
-version: 9338
+version: 9352
 libraryID: 1
 itemKey: IARDKMC7
 
@@ -31,3 +31,5 @@ HULL 使用 Phantom Queues 留出“带宽余量”，Phantom Queues 在网络�
 网络延迟的主要构成部分：1. 端点协议栈；2. NIC；3. 交换机
 
 介绍 buffer 对缓存和延迟的影响，接着引出文章的思路，以链路的利用率来替换 buffer
+
+预留出带宽给延迟敏感的请求
