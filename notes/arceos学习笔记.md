@@ -93,3 +93,18 @@ Task 的执行通过 TaskInner 函数进行，yield、exit、block、sleep 等�
 
 新增一个 get_cx 接口，获取当前的协程的 cx，这样即可在 block 时向中断控制器中注册阻塞的协程
 
+## Run redis on arceos
+
+make PLATFORM=riscv64-axu15eg A=apps/c/redis FEATURES=driver-axi-eth,driver-ramdisk LOG=info SMP=4
+
+## iperf
+
+需要在 feature.txt 中声明使用 multitask，才能使用 sched_atsintc 调度器，但还是无法，但 iperf 一旦建立连接后，就不会 yield，ATSINTC 无法使用
+
+## redis
+
+redis 使用了 epoll，目前的问题是使用了 atsintc 的调度器在开发板上无法正常建立连接，问题还不知道出在哪里
+
+## 结论
+
+目前利用 ATSINTC 的机制，在开发板上运行 arceos 的 redis 和 iperf 在短时间内是达不到目的的
