@@ -3,7 +3,7 @@ tags: []
 parent: 'The RISC-V Advanced Interrupt Architecture'
 collections:
     - riscv
-version: 12239
+version: 12347
 libraryID: 1
 itemKey: TWF42YKE
 
@@ -178,13 +178,13 @@ MSI 根据接收 hart 存在的相关的 interrupt file被定向到特定的特�
 
 ### Reset and revealed state
 
-当 IMSIC 复位时，其中断文件的所有状态都是有效且一致的。但除了 eidelivery 寄存器外。
+当 IMSIC 复位时，其interrupt file的所有状态都是有效且一致的。但除了 eidelivery 寄存器外。
 
 ### Memory region for an interrupt file
 
 IMSIC 的每个 interrupt file 有一个或者两个 memory-mapped 32bit 的寄存器，用于接收 MSI 写。
 
-每个中断文件是 4KiB 对其的，但只有最开始的两个 32bit 能写，其他的位置均保留（只读）。
+每个interrupt file是 4KiB 对其的，但只有最开始的两个 32bit 能写，其他的位置均保留（只读）。
 
 |                |               |
 | -------------- | ------------- |
@@ -194,3 +194,57 @@ IMSIC 的每个 interrupt file 有一个或者两个 memory-mapped 32bit 的寄�
 在 seteipnum\_le 中以小端序写 i ，则会将 interrupt file 中编号为 i 的 pending 位置位。（seteipnum\_be 则是大端序。）读这两个寄存器将直接返回 0。
 
 ### Arrangement of the memory regions of multiple interrupt files
+
+每个 interrupt file 占据一个 4KiB 页，每个特权级下的页面一起位于地址空间的一部分（PMP 机制）。
+
+每个 hart 存在一个 hart\_id（h），则对应的 Machine 特权级interrupt file地址为 A + h \* 2<sup>C</sup>，A 表示基址，C 表示interrupt file的页面对齐，最小为 12。supervisor 特权级对应的interrupt file地址为 B + h \* 2<sup>D</sup>。若实现了 guest interrupt file，则对应的interrupt file为 S,G1,G2,G3,……，Gi 表示 guest interrupt number i，常数 D 至少为 12 + log<sub>2</sub>(max GEILEN + 1)。
+
+### CSRs for external interrupts via an IMSIC
+
+### Indirectly accessed interrupt-file registers
+
+#### External interrupt delivery enable register (eidelivery)
+
+控制来自该interrupt file的中断是否从 IMSIC 传送到连接的 hart。可能的值为：
+
+*   0：disable
+*   1：来自 interrupt file 的中断使能
+*   0x40000000：来自 PLIC 或 APLIC 的中断使能
+
+当 eidelivery 为 0x40000000 时，interrupt file 的功能与 eidelivery 为 0 时相同，PLIC 或 APLIC 充当提供外部中断的控制器。
+
+Guest interrupt file 不支持 0x40000000 模式。
+
+#### External interrupt enable threshold register (eithreshold)
+
+中断门槛（最小的中断优先级，最大的中断编号），当 eithreshold 为 0 时，所有的中断都被使能。
+
+#### External interrupt-pending registers (eip0–eip63)
+
+如果 XLEN=32，则支持的数量为 64 \* 32；如果 XLEN=64，则支持的数量为 32 \* 64，只支持偶数的 eip0, eip2, eip4 等。eie 相同。
+
+### Top external interrupt CSRs (mtopei, stopei, vstopei)
+
+表示当前包含的优先级最高的 pending-and-enabled 的中断，优先级超过 eithreshold。当不满足条件时，读出来的数为 0，否则独处来的格式为：
+
+|       |                                       |
+| ----- | ------------------------------------- |
+| 26:16 | Interrupt identity                    |
+| 10:0  | Interrupt priority (same as identity) |
+
+写 \*topei CSR 将清除对应的中断文件的 pending 位。（写入的值会被忽略，CSRRW 指令会直接清除 pending,并返回对应的中断编号，如果分别使用 CSR 指令进行处理，很大概率会出错，因为两条指令中间，可能会出现更高优先级的中断，如果不使用 CSRRW 指令，则应该通过 sielect 和 sireg 寄存器来进行）
+
+### Interrupt delivery and handling
+
+1.  保存处理器寄存器
+2.  读 \*topei 寄存器中断编号 i，同时清除
+3.  i = i >> 16
+4.  调用中断号为 i 的中断处理程序
+5.  回复处理器寄存器
+6.  返回
+
+## Advanced Platform-Level Interrupt Controller (APLIC)
+
+### Memory-mapped control region for an interrupt domain
+
+##
