@@ -3,7 +3,7 @@ tags: []
 parent: 'The RISC-V Advanced Interrupt Architecture'
 collections:
     - riscv
-version: 12347
+version: 12388
 libraryID: 1
 itemKey: TWF42YKE
 
@@ -34,7 +34,7 @@ itemKey: TWF42YKE
 
 可以支持的 hart 的数量存在上限
 
-![\<img alt="" data-attachment-key="9G23RWHL" width="795" height="343" src="attachments/9G23RWHL.png" ztype="zimage">](attachments/9G23RWHL.png)
+![\<img alt="" data-attachment-key="9G23RWHL" src="attachments/9G23RWHL.png" ztype="zimage">](attachments/9G23RWHL.png)
 
 ### Overview of main components
 
@@ -46,13 +46,13 @@ RISC-V 系统对信号中断的处理取决于主要是针对 MSI 还是传统�
 
 当没有 IMSIC 时，外部中断通过专用的中断线给 hart 发信号，由 APLIC 进行路由，并确定优先级。
 
-![\<img alt="" data-attachment-key="PWYSS698" width="892" height="469" src="attachments/PWYSS698.png" ztype="zimage">](attachments/PWYSS698.png)
+![\<img alt="" data-attachment-key="PWYSS698" src="attachments/PWYSS698.png" ztype="zimage">](attachments/PWYSS698.png)
 
 当没有 IMSIC 时，即使 hart 实现了 h 扩展，也不能向 VM 直接发送外部中断，中断必须发送给相关的 hypervisor，hypervisor 再将虚拟中断注入到 VM 中。
 
 #### External interrupts with IMSICs
 
-![\<img alt="" data-attachment-key="BXERK9ZR" width="1004" height="531" src="attachments/BXERK9ZR.png" ztype="zimage">](attachments/BXERK9ZR.png)
+![\<img alt="" data-attachment-key="BXERK9ZR" src="attachments/BXERK9ZR.png" ztype="zimage">](attachments/BXERK9ZR.png)
 
 每个 MSI 中断实际上是写入特定内存地址，硬件视它为中断。因此 IMSIC 需要在机器的地址空间中分配一个或多个不同的地址，当预期的地址被写入时，IMSIC 将写入解释为相应的硬件产生了中断。并且可以从任何具有写入权限的代理（hart 或设备）接收中断。
 
@@ -71,7 +71,7 @@ IMSIC 用特定的 interrupt file 来记录 中断pending 和 中断 enable。
 
 ### Interrupt identities at a hart
 
-![\<img alt="" data-attachment-key="W5U864L2" width="1025" height="819" src="attachments/W5U864L2.png" ztype="zimage">](attachments/W5U864L2.png)
+![\<img alt="" data-attachment-key="W5U864L2" src="attachments/W5U864L2.png" ztype="zimage">](attachments/W5U864L2.png)
 
 外部中断的编号需要有外部中断控制器提供支持。
 
@@ -95,7 +95,7 @@ AIA 为中断控制与处理增加了 CSRs。
 
 ### Machine-level CSRs
 
-![\<img alt="" data-attachment-key="DTU2GDXJ" width="1010" height="660" src="attachments/DTU2GDXJ.png" ztype="zimage">](attachments/DTU2GDXJ.png)
+![\<img alt="" data-attachment-key="DTU2GDXJ" src="attachments/DTU2GDXJ.png" ztype="zimage">](attachments/DTU2GDXJ.png)
 
 miselect 和 mireg （8bits）用于访问除了表中的 CSRs 之外的寄存器
 
@@ -114,13 +114,13 @@ miselect
 
 ### Supervisor-level CSRs
 
-![\<img alt="" data-attachment-key="XSYKGJFF" width="949" height="450" src="attachments/XSYKGJFF.png" ztype="zimage">](attachments/XSYKGJFF.png)
+![\<img alt="" data-attachment-key="XSYKGJFF" src="attachments/XSYKGJFF.png" ztype="zimage">](attachments/XSYKGJFF.png)
 
 与 machine 模式下相似，但 siselect 和 sireg 为 9 位，用于区分虚拟中断。
 
 ### Hypervisor and VS CSRs
 
-![\<img alt="" data-attachment-key="VYDFDYJ4" width="1029" height="837" src="attachments/VYDFDYJ4.png" ztype="zimage">](attachments/VYDFDYJ4.png)
+![\<img alt="" data-attachment-key="VYDFDYJ4" src="attachments/VYDFDYJ4.png" ztype="zimage">](attachments/VYDFDYJ4.png)
 
 vsiselect
 
