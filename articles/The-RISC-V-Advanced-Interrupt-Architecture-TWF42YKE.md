@@ -3,7 +3,7 @@ tags: []
 parent: 'The RISC-V Advanced Interrupt Architecture'
 collections:
     - riscv
-version: 12388
+version: 12597
 libraryID: 1
 itemKey: TWF42YKE
 
