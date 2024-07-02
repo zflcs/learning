@@ -4,7 +4,7 @@ tags:
 parent: 'Fast Interrupt  Priority Management in Operating System Kernels'
 collections:
     - 中断
-version: 12814
+version: 13002
 libraryID: 1
 itemKey: VQHN4ADG
 
@@ -72,3 +72,7 @@ OS 的基本设计决策之一是如何处理同步和异步事件之间的协�
 在 non-preemptable 方法中，同步时间和异步事件的处理都不能被打断，这要求所有的处理都必须很短，不能阻塞。
 
 lock-free synchronization 对硬件有额外的要求。
+
+## 总结
+
+减少了硬件中断屏蔽位的不必要的修改操作，若发生了中断，则会将中断处理延迟到临界区尾部。与没有抢占的控制器类似。

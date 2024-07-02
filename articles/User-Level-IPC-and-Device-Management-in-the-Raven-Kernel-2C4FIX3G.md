@@ -3,7 +3,7 @@ tags: []
 parent: 'User Level IPC and Device Management in the Raven Kernel'
 collections:
     - IPC
-version: 12978
+version: 13000
 libraryID: 1
 itemKey: 2C4FIX3G
 
@@ -165,3 +165,8 @@ client 和 server 的数量增加，IPC 的性能增加较小，在单处理器�
 
 1.  内核的中断处理：7.21微秒
 2.  用户态注册了中断处理函数的任务在线时：7.21 微秒 \* 2
+
+## 总结
+
+1.  使用 MVME188 硬件的中断转发能力，使得接收双方在线时，不需要内核参与；
+2.  用户态设备管理：内核将中断转发给用户态，带来了特权级切换的开销，但后续的处理会在用户态进行，避免了在内核与用户态之间复制数据。
