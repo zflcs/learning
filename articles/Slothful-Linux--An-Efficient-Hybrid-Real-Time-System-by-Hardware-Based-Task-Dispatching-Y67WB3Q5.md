@@ -3,7 +3,7 @@ tags: []
 parent: 'Slothful Linux: An Efficient Hybrid Real-Time System by Hardware-Based Task Dispatching'
 collections:
     - slotthful-linux
-version: 13447
+version: 13448
 libraryID: 1
 itemKey: Y67WB3Q5
 
