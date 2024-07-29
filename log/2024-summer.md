@@ -2,9 +2,25 @@
 
 ## TODO
 
-- [ ] 处理 ZJP 对 rCore-N 的修改
-- [ ] 完成对 starry 的修改
+- [x] 完成对 starry 的修改
+- [x] 处理 ZJP 对 rCore-N 的修改
 - [ ] 前两篇论文工作的总结，以及后续投稿
+
+## 20240729
+
+- [x] debug
+  - 栈的保存和使用还存在问题
+  - 在回到 yield 函数后，将栈清空，这是正确的顺序，而不是在恢复之前将其清空
+  - 运行 async_monolithic 时，在 cfs 和 rr 调度器下，都能够正常工作，反而在 fifo 调度器下不能正常工作，问题是 main_coroutine 被莫名其妙的 block 了，还是因为没有正确的回收栈的问题
+  - 栈池的管理需要一个合理的方式
+  - 指针乱飞的问题仍然没有解决，在不乱飞的情况下，已经可以执行 ls 指令了
+- [x] 把 overleaf 上的论文拉到 github 仓库中，方便进行 latex-diff，并对格式进行了整理
+- [x] 整理 rCore-N 仓库
+  - 已进行合并，但代码运行还存在问题，出现 bug，将其放置到新的分支 fixed-warnings 上
+- [x] 修改共享调度器小论文
+  - 找到两篇与调度相关的论文：
+    - Efficient Scheduler Live Update for Linux Kernel with Modularization
+    - Light-weight Contexts: An OS Abstraction for Safety and Performance
 
 ## 20240728
 
