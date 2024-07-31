@@ -6,6 +6,12 @@
 - [x] 处理 ZJP 对 rCore-N 的修改
 - [ ] 前两篇论文工作的总结，以及后续投稿
 
+## 20240731
+
+- [x] 阅读论文：Revisiting Coroutines
+- [x] 修改小论文
+- [ ] 
+
 ## 20240730
 
 - [x] 阅读论文：Light-weight Contexts: An OS Abstraction for Safety and Performance
