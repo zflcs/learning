@@ -6,6 +6,18 @@
 - [x] 处理 ZJP 对 rCore-N 的修改
 - [ ] 前两篇论文工作的总结，以及后续投稿
 
+## 20240804
+
+- [x] 修改 starry 中的 bug
+- [x] 阅读论文：lmbench: Portable Tools for Performance Analysis
+- [x] 阅读论文：Beyond Multiprocessing: Multithreading the SunOS Kernel
+- [ ] 阅读论文：CPU Inheritance Scheduling
+
+## 20240803
+
+- [x] 完善共享调度器小论文中关于内存占用的描述
+- [x] 继续修改 starry 中的 bug
+
 ## 20240802
 
 - [x] 修改共享调度器小论文
