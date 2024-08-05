@@ -6,6 +6,11 @@
 - [x] 处理 ZJP 对 rCore-N 的修改
 - [ ] 前两篇论文工作的总结，以及后续投稿
 
+## 20240805
+
+- [x] 修改 starry
+- [ ] 阅读论文：CPU Inheritance Scheduling
+
 ## 20240804
 
 - [x] 修改 starry 中的 bug
