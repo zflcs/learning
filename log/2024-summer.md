@@ -6,6 +6,12 @@
 - [x] 处理 ZJP 对 rCore-N 的修改
 - [ ] 前两篇论文工作的总结，以及后续投稿
 
+## 20240806
+
+- [x] 修改 starry
+  - 又遇到了打印日志就正常的，不打印日志就出错的现象
+- [x] 阅读论文：CPU Inheritance Scheduling
+
 ## 20240805
 
 - [x] 修改 starry
