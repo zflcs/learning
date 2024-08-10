@@ -6,6 +6,14 @@
 - [x] 处理 ZJP 对 rCore-N 的修改
 - [ ] 前两篇论文工作的总结，以及后续投稿
 
+## 20240810
+
+- [x] 修改 starry 中的 bug
+  - 出现了 exec_page_fault，同一个虚拟地址处的指令，在执行时却是不同的指令，没有刷新页表缓存，在切换到 UTRAP 时需要刷新页表
+  - 使用 fifo 调度器可以通过 monolithic 的测例，但使用 cfs 还是会出现一些奇怪的问题，还是由于抢占的问题，但原本的 starry 也无法完整运行测试
+- [x] 阅读论文
+  - CPU Inheritance Scheduling
+
 ## 20240808
 
 - [x] 阅读论文：CPU Inheritance Scheduling
