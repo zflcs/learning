@@ -3,7 +3,7 @@ tags: []
 parent: 'Efficient Microsecond-scale Blind Scheduling with Tiny Quanta'
 collections:
     - 调度
-version: 15901
+version: 16012
 libraryID: 1
 itemKey: U8MWHNB8
 
@@ -243,12 +243,118 @@ Shinjuku 可以降低短作业的延迟（抢占式调度）；
 
 Caladan 对于长作业能够达到更高的吞吐量；
 
-TQ 针对了各自的缺点进行了优化。
+TQ 针对了各自的缺点进行了优化。在 10 倍总体减速预算下，TQ 的吞吐量是 Caladan 的 1.29 倍，是 Shinjuku 的 1.18 倍。
 
 #### RocksDB
+
+![\<img alt="" data-attachment-key="C3SG3V7V" width="1391" height="330" src="attachments/C3SG3V7V.png" ztype="zimage">](attachments/C3SG3V7V.png)
+
+在 0.5% SCAN 的操作，对于 GET 操作，TQ 能够达到 Shinjuku 和 Caladan 1.93x、2.07x 的吞吐量。
+
+在 50% SCAN 的操作，对于 GET 操作，TQ 能够达到 Shinjuku 和 Caladan 1.28x、2.21x 的吞吐量。
+
+对于 SCAN 操作（开销较大），TQ 相较于 Shinjuku，在 0.5%、50% 的 SCAN 操作下，TQ 的吞吐量是 1.63x 和 1.13x。
+
+#### Exponential
+
+![\<img alt="" data-attachment-key="XKG2H3GG" width="660" height="232" src="attachments/XKG2H3GG.png" ztype="zimage">](attachments/XKG2H3GG.png)
+
+TQ 的端到端延时在 50 微秒之下的情况下，吞吐量是 Shinjuku 的 6.85x，Caladan 的 1.21x。
+
+### Breakdown of TQ’s performance
+
+（TQ 自己内部的比较）
+
+#### Forced-multitasking
+
+![\<img alt="" data-attachment-key="U4RBCMMT" width="1367" height="240" src="attachments/U4RBCMMT.png" ztype="zimage">](attachments/U4RBCMMT.png)
+
+每个不同的组件都对 TQ 的性能有重大的影响。
+
+TQ-IC：使用基于指令计数器的插桩，由于探针的开销较大，吞吐量为 TQ 的 62%
+
+TQ-SLOW-YIELD：在协程让权时，增加 1 微秒的延迟，吞吐量是 TQ 的 81%，对于需要更多抢占的场景下，吞吐量的差距更大
+
+TQ-TIMING：对于 GET 和 SCAN 使用 1微秒 和 3微秒模拟不准确的抢占，吞吐量为 TQ 的81%，但 GET 操作由于时间片过小导致队头阻塞的情况更严重。
+
+#### Two-level scheduling
+
+（前两个针对 dispatcher（负载均衡），后一个针对 worker，采用 FCFS 调度策略）
+
+![\<img alt="" data-attachment-key="ASFLBP63" width="1352" height="255" src="attachments/ASFLBP63.png" ztype="zimage">](attachments/ASFLBP63.png)
+
+TQ-RAND：GET 操作在 50 微秒的延迟下，吞吐量为 TQ 的 53%
+
+TQ-POWER-TWO：吞吐量相当，但延时稍高
+
+TQ-FCFS：吞吐量与 Caladan 相当，只能达到 TQ 的 34%（由于队头阻塞问题），对于长作业，FCFS 更友好。
+
+### Cache behavior at microsecond scale
+
+1.  时间片对缓存的影响
+2.  两级调度以及中心化调度对缓存的影响
+
+### Performance of TQ’s components
+
+1.  基于物理时钟的探针是否始终优先于基于指令计数器的方法？
+2.  两级调度是否允许轻易的扩展？
+
+#### Compiler instrumentation
+
+![\<img alt="" data-attachment-key="2B8G5A52" width="594" height="835" src="attachments/2B8G5A52.png" ztype="zimage">](attachments/2B8G5A52.png)
+
+与 CI 相比，TQ 的编译器传递平均减少了 43% 的探测开销和 57% 的产出时序平均误差 (MAE)。主要由于 **TQ 有策略的放置探针**。
+
+#### Two-level scheduling
+
+![\<img alt="" data-attachment-key="NIMYLKPL" width="656" height="204" src="attachments/NIMYLKPL.png" ztype="zimage">](attachments/NIMYLKPL.png)
+
+客户端生成一个仅由 1 毫秒作业（减小由于 dispatcher 的数据包处理开销）组成的工作负载，Shinjuku 和 TQ 尝试按照一些时间片大小大小进行调度。
+
+最后的评价指标是一个 dispatcher 能够支持的最大的 worker 数量。
+
+当时间片大小从 5μs 下降到 3μs 时，Shinjuku 的 dispatcher 无法支持 16 个 workers。TQ 始终可以支持 16 个 workers。
+
+## Limitations and Discussion
+
+### Dispatcher throughput
+
+不需要解析包的内容来决定转发，而不维护队列，dispatcher 能够达到 14Mrps 的吞吐量，其他的系统只能达到 5Mrps（需要增加 dispatcher 的数量）。
+
+### Synthetic cache evaluation
+
+对缓存行为的仿真不足以解释真实负载下的行为。真是负载对缓存的影响更多。因此需要更多的真实负载来测试缓存对性能的影响。
+
+### Reentrancy
+
+需要防止不安全的重入，可能的解决方案是：在不可重入的函数张不插桩。
+
+## Related work
+
+### 微秒级调度
+
+1.  基于对工作负载有了解
+2.  使用中断进行盲目抢占，开销过大
+3.  Concord 使用共享缓存行来取代中断，但使用了中心化调度
+
+### Compiler-instrumented yields
+
+之前的工作探针的开销过大，且抢占不准确。
+
+使用编译器插桩来实现定时器中断，与 TQ 相似。但 TQ 的探针数量更少，减小了开销。
+
+### Hardware-assisted user-level interrupt
+
+UINTR 的开销约为 2000 个周期，不适用于小时间片（小于 5 微秒）的调度。LibPreemptible 支持的最小时间片为 3 微秒。而 TQ 可以支持 1微秒。
+
+### Two-level scheduling
+
+TQ 利用 MSQ 打破捆绑来减少长作业的延迟。
 
 ## 评价：
 
 1.  并且对于插桩的细节进行了很多剪枝优化。
 2.  对于调用的外部库或者系统调用，编译器不知道执行的细节，这种方式需要额外的开销
-3.  Concord 也采用了这种编译器强制协作的方式，没有进行两者的对比，应该是写作上避免审稿人的提问
+3.  Concord 也采用了这种编译器强制协作的方式，在相关工作中提到了 Concord 的工作，但没有进行两者的对比
+4.  文中对于 Caladan 的延时和吞吐量的解释，都是用 FCFS 更适合于长作业任务来解释，可能比较乏力；但 TQ 内部对比了不同的插桩计数之间的差距对比
+5.
