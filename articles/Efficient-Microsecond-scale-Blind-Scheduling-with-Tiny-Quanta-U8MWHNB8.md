@@ -3,11 +3,17 @@ tags: []
 parent: 'Efficient Microsecond-scale Blind Scheduling with Tiny Quanta'
 collections:
     - 调度
-version: 16012
+version: 16186
 libraryID: 1
 itemKey: U8MWHNB8
 
 ---
+***
+
+tags: \[] parent: 'Efficient Microsecond-scale Blind Scheduling with Tiny Quanta' collections: - 调度 version: 16012 libraryID: 1 itemKey: U8MWHNB8
+
+***
+
 # Efficient Microsecond-scale Blind Scheduling with Tiny Quanta
 
 ## Abstract
@@ -52,13 +58,13 @@ TQ 的核心思路：
 
 若减少了抢占的开销，则减小时间片非常有价值。
 
-![\<img alt="" data-attachment-key="TWET83A3" width="1291" height="249" src="attachments/TWET83A3.png" ztype="zimage">](attachments/TWET83A3.png)
+![\<img alt="" data-attachment-key="TWET83A3" src="attachments/TWET83A3.png" ztype="zimage">](attachments/TWET83A3.png)
 
 （17个核，一个核充当中心化调度器，16个核从各自的队列上取出任务）
 
 当时间片越小（0.5微秒）时，slowdown 最小。
 
-![\<img alt="" data-attachment-key="AQDK59ME" width="1296" height="253" src="attachments/AQDK59ME.png" ztype="zimage">](attachments/AQDK59ME.png)
+![\<img alt="" data-attachment-key="AQDK59ME" src="attachments/AQDK59ME.png" ztype="zimage">](attachments/AQDK59ME.png)
 
 （不同的抢占开销下，不同的时间片下能达到的吞吐量）
 
@@ -66,7 +72,7 @@ TQ 的核心思路：
 
 ## Design
 
-![\<img alt="" data-attachment-key="XADQ7S68" width="628" height="576" src="attachments/XADQ7S68.png" ztype="zimage">](attachments/XADQ7S68.png)
+![\<img alt="" data-attachment-key="XADQ7S68" src="attachments/XADQ7S68.png" ztype="zimage">](attachments/XADQ7S68.png)
 
 1.  dispatcher 从网卡轮询收到的包
 2.  根据每个 worker 的工作负载将收到的包分发到 worker
@@ -111,7 +117,7 @@ TQ 使用指令计数来保证插桩密度，但是否让出由物理时钟决�
 
 已有的工作：集中式调度，可扩展性差
 
-![\<img alt="" data-attachment-key="8RPSWWMV" width="541" height="369" src="attachments/8RPSWWMV.png" ztype="zimage">](attachments/8RPSWWMV.png)
+![\<img alt="" data-attachment-key="8RPSWWMV" src="attachments/8RPSWWMV.png" ztype="zimage">](attachments/8RPSWWMV.png)
 
 在极端双模工作负载中的长作业，中心化调度不如两级调度。要维持性能，则必须增加专用调度核的数量。
 
@@ -123,7 +129,7 @@ worker 采用 PS 策略，对于重尾服务时间分布是最优的，dispatche
 
 JSQ 的实现方式：naive（random）会导致将长作业分配给一个已经有长作业的核心之上，这会导致这两个长作业来回切换，导致性能下降。MSQ 方式会挑选出为当前任务使用了最多时间片的核心，并且期望该核心的剩余处理时间较少。
 
-![\<img alt="" data-attachment-key="VYRJSQYP" width="827" height="351" src="attachments/VYRJSQYP.png" ztype="zimage">](attachments/VYRJSQYP.png)  
+![\<img alt="" data-attachment-key="VYRJSQYP" src="attachments/VYRJSQYP.png" ztype="zimage">](attachments/VYRJSQYP.png)  
 
 （在没有抢占开销时，CT 在仿真中的表现更好，但 TLS 可以得到有效支持，使得 TQ 的实际表现优于 shinjuku）
 
@@ -133,7 +139,7 @@ JSQ 的实现方式：naive（random）会导致将长作业分配给一个已�
 
 ### Compiler-instrumented yielding
 
-![\<img alt="" data-attachment-key="QA2K3I3X" width="837" height="404" src="attachments/QA2K3I3X.png" ztype="zimage">](attachments/QA2K3I3X.png)
+![\<img alt="" data-attachment-key="QA2K3I3X" src="attachments/QA2K3I3X.png" ztype="zimage">](attachments/QA2K3I3X.png)
 
 ### Networking
 
@@ -201,7 +207,7 @@ Caladan 在一个核上运行 IOKernel、TQ 运行 dispatcher，都是用 16 个
 
 使用 Extreme Bimodal 工作负载对 TQ 进行了评估，时间片大小从 10μs 到 0.5μs，并测量了不同请求率下的 99.9% 延迟。
 
-![\<img alt="" data-attachment-key="CPBVEIFU" width="1711" height="279" src="attachments/CPBVEIFU.png" ztype="zimage">](attachments/CPBVEIFU.png)
+![\<img alt="" data-attachment-key="CPBVEIFU" src="attachments/CPBVEIFU.png" ztype="zimage">](attachments/CPBVEIFU.png)
 
 （横轴展示出吞吐率，纵轴展示出尾部延迟）
 
@@ -213,7 +219,7 @@ TQ 的 forced-multitasking 机制的开销，足以支撑 1 微秒的时间片�
 
 TQ 的性能表明，它的吞吐量是 Shinjuku 和 Caladan 的 1.2 倍到 6.8 倍，且在所有工作负载下，延时更小。
 
-![\<img alt="" data-attachment-key="677TSLX3" width="1724" height="712" src="attachments/677TSLX3.png" ztype="zimage">](attachments/677TSLX3.png)
+![\<img alt="" data-attachment-key="677TSLX3" src="attachments/677TSLX3.png" ztype="zimage">](attachments/677TSLX3.png)
 
 #### Extreme Bimodal
 
@@ -224,7 +230,10 @@ Shinjuku 不能维持高吞吐量（由于大量抢占开销），尽管小负�
 TQ：
 
 1.  短作业：在吞吐量达到 4.5 Mrps 之前，延迟都小于 50 微秒，吞吐量是 Caladan 的 2.1 倍，Shinjuku 的 2.6 倍。
-2.  长作业：吞吐量是 Caladan 的 1.2 倍，Shinjuku 的 1.8 倍。**在中等负载情况下，Caladan 的长作业延迟比 TQ 低，这是意料之中的，因为 FCFS 优先调度长作业。**
+
+2.  长作业：吞吐量是 Caladan 的 1.2 倍，Shinjuku 的 1.8 倍。
+
+    **在中等负载情况下，Caladan 的长作业延迟比 TQ 低，这是意料之中的，因为 FCFS 优先调度长作业。**
 
 #### Hign Bimodal（请求率和分散比例更低）
 
@@ -233,11 +242,14 @@ Shinjuku 由于抢占，相较于 Caladan 可以实现更高的吞吐量且端�
 TQ
 
 1.  短作业：吞吐量分别是 Caladan 和 Shinjuku 的 1.65 倍和 1.33 倍。
-2.  长作业：最高吞吐量，延时与 Shinjuku 相当，但**延时高于 Caladan（FCFS 策略），增加了抢占开销**
+
+2.  长作业：最高吞吐量，延时与 Shinjuku 相当，但
+
+    **延时高于 Caladan（FCFS 策略），增加了抢占开销**
 
 #### TPC-C（不同系统对于不同规模的作业的处理）
 
-![\<img alt="" data-attachment-key="635KZV7V" width="1707" height="300" src="attachments/635KZV7V.png" ztype="zimage">](attachments/635KZV7V.png)
+![\<img alt="" data-attachment-key="635KZV7V" src="attachments/635KZV7V.png" ztype="zimage">](attachments/635KZV7V.png)
 
 Shinjuku 可以降低短作业的延迟（抢占式调度）；
 
@@ -247,7 +259,7 @@ TQ 针对了各自的缺点进行了优化。在 10 倍总体减速预算下，T
 
 #### RocksDB
 
-![\<img alt="" data-attachment-key="C3SG3V7V" width="1391" height="330" src="attachments/C3SG3V7V.png" ztype="zimage">](attachments/C3SG3V7V.png)
+![\<img alt="" data-attachment-key="C3SG3V7V" src="attachments/C3SG3V7V.png" ztype="zimage">](attachments/C3SG3V7V.png)
 
 在 0.5% SCAN 的操作，对于 GET 操作，TQ 能够达到 Shinjuku 和 Caladan 1.93x、2.07x 的吞吐量。
 
@@ -257,7 +269,7 @@ TQ 针对了各自的缺点进行了优化。在 10 倍总体减速预算下，T
 
 #### Exponential
 
-![\<img alt="" data-attachment-key="XKG2H3GG" width="660" height="232" src="attachments/XKG2H3GG.png" ztype="zimage">](attachments/XKG2H3GG.png)
+![\<img alt="" data-attachment-key="XKG2H3GG" src="attachments/XKG2H3GG.png" ztype="zimage">](attachments/XKG2H3GG.png)
 
 TQ 的端到端延时在 50 微秒之下的情况下，吞吐量是 Shinjuku 的 6.85x，Caladan 的 1.21x。
 
@@ -267,7 +279,7 @@ TQ 的端到端延时在 50 微秒之下的情况下，吞吐量是 Shinjuku 的
 
 #### Forced-multitasking
 
-![\<img alt="" data-attachment-key="U4RBCMMT" width="1367" height="240" src="attachments/U4RBCMMT.png" ztype="zimage">](attachments/U4RBCMMT.png)
+![\<img alt="" data-attachment-key="U4RBCMMT" src="attachments/U4RBCMMT.png" ztype="zimage">](attachments/U4RBCMMT.png)
 
 每个不同的组件都对 TQ 的性能有重大的影响。
 
@@ -281,7 +293,7 @@ TQ-TIMING：对于 GET 和 SCAN 使用 1微秒 和 3微秒模拟不准确的抢�
 
 （前两个针对 dispatcher（负载均衡），后一个针对 worker，采用 FCFS 调度策略）
 
-![\<img alt="" data-attachment-key="ASFLBP63" width="1352" height="255" src="attachments/ASFLBP63.png" ztype="zimage">](attachments/ASFLBP63.png)
+![\<img alt="" data-attachment-key="ASFLBP63" src="attachments/ASFLBP63.png" ztype="zimage">](attachments/ASFLBP63.png)
 
 TQ-RAND：GET 操作在 50 微秒的延迟下，吞吐量为 TQ 的 53%
 
@@ -301,13 +313,13 @@ TQ-FCFS：吞吐量与 Caladan 相当，只能达到 TQ 的 34%（由于队头�
 
 #### Compiler instrumentation
 
-![\<img alt="" data-attachment-key="2B8G5A52" width="594" height="835" src="attachments/2B8G5A52.png" ztype="zimage">](attachments/2B8G5A52.png)
+![\<img alt="" data-attachment-key="2B8G5A52" src="attachments/2B8G5A52.png" ztype="zimage">](attachments/2B8G5A52.png)
 
 与 CI 相比，TQ 的编译器传递平均减少了 43% 的探测开销和 57% 的产出时序平均误差 (MAE)。主要由于 **TQ 有策略的放置探针**。
 
 #### Two-level scheduling
 
-![\<img alt="" data-attachment-key="NIMYLKPL" width="656" height="204" src="attachments/NIMYLKPL.png" ztype="zimage">](attachments/NIMYLKPL.png)
+![\<img alt="" data-attachment-key="NIMYLKPL" src="attachments/NIMYLKPL.png" ztype="zimage">](attachments/NIMYLKPL.png)
 
 客户端生成一个仅由 1 毫秒作业（减小由于 dispatcher 的数据包处理开销）组成的工作负载，Shinjuku 和 TQ 尝试按照一些时间片大小大小进行调度。
 
