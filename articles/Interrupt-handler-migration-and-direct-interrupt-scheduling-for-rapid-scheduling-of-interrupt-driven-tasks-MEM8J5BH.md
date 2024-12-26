@@ -3,7 +3,7 @@ tags: []
 parent: 'Interrupt handler migration and direct interrupt scheduling for rapid scheduling of interrupt-driven tasks'
 collections:
     - 调度
-version: 16337
+version: 16499
 libraryID: 1
 itemKey: MEM8J5BH
 
@@ -86,9 +86,83 @@ a 中的 prev 是已经处于中断处理程序中，内核不可被抢占，只
 带来的问题：
 
 1.  如果中断没有唤醒目标进程将会发生什么？
-2.  如果多个目标进程等待同一个中断源？
-3.
+2.  如果多个目标进程等待同一个中断源会发生什么？唤醒最高优先级的进程
+3.  如果在前一个进程和目标进程之间插入多个中断处理线程会发生什么？多级 IHM
 
-## 评价
+IHM 机制流程：
+
+![\<img alt="" data-attachment-key="7WEG9EGK" width="852" height="646" src="attachments/7WEG9EGK.png" ztype="zimage">](attachments/7WEG9EGK.png)
+
+灰色表示使能了 IHM 机制，白色部分为原来的流程
+
+![\<img alt="" data-attachment-key="NT9IBF2Z" width="861" height="427" src="attachments/NT9IBF2Z.png" ztype="zimage">](attachments/NT9IBF2Z.png)
+
+即使预测的目标进程错误，相较于原本的中断处理线程技术，没有增加延迟
+
+### Operation of IHM under Multiple Waiting Processes
+
+从多个等待进程中选择一个作为目标进程，选择原则：优先级最高
+
+### Operation of IHM under Multiple Interposed Interrupt Handler Threads
+
+对于存在多个中断处理阶段，这种方法可以减少一次以上的调度开销。
+
+![\<img alt="" data-attachment-key="ELEGV2UB" width="856" height="355" src="attachments/ELEGV2UB.png" ztype="zimage">](attachments/ELEGV2UB.png)  
+
+![\<img alt="" data-attachment-key="JPE5742M" width="861" height="335" src="attachments/JPE5742M.png" ztype="zimage">](attachments/JPE5742M.png)
+
+### Resolving the Priority Inversion Problem Caused by IHM
+
+![\<img alt="" data-attachment-key="PAFU8CWM" width="862" height="375" src="attachments/PAFU8CWM.png" ztype="zimage">](attachments/PAFU8CWM.png)
+
+随着中断处理线程的引入（中断处理线程可以增加优先级属性），除了增加一次调度开销，还可能造成优先级反转问题
+
+## DIRECT INTERRUPT SCHEDULING (DIS)
+
+### Basic Concept of DIS
+
+![\<img alt="" data-attachment-key="P6X89LKN" width="995" height="451" src="attachments/P6X89LKN.png" ztype="zimage">](attachments/P6X89LKN.png)
+
+在中断到达和目标进程之间铺设为紧急中断进程对预留的最短路径，使重要的中断进程对处理不被次要的操作延迟。
+
+![\<img alt="" data-attachment-key="D8Q8QST2" width="1252" height="441" src="attachments/D8Q8QST2.png" ztype="zimage">](attachments/D8Q8QST2.png)
+
+![\<img alt="" data-attachment-key="B9XE94UH" width="1101" height="485" src="attachments/B9XE94UH.png" ztype="zimage">](attachments/B9XE94UH.png)
+
+time-indep 和 time-dep 指以下与时间相关的统计信息，运行时间、修改任务状态等。
+
+## EXPERIMENTS
+
+使用时钟中断以及网络中断进行测试。
+
+使用额外的硬件定时器来生成紧急的时钟中断
+
+三个进程：
+
+1.  Timer task：等待 5 ms 一次的紧急时钟中断
+2.  Net task：等待网络包时休眠
+3.  Calc task：重复一系列算数运算
+
+### One Process Waiting for a Timer interrupt
+
+同时运行 timer task（优先级高） 和 calc task
+
+目标：在calc任务存在的情况下，最小化相对于定时器任务的OS延迟。
+
+![\<img alt="" data-attachment-key="5INYIQS4" width="858" height="796" src="attachments/5INYIQS4.png" ztype="zimage">](attachments/5INYIQS4.png)
+
+### One Process Waiting for a Network Interrupt
+
+同时运行 Net task 和 calc task，Net task 运行在嵌入式板上，向远端的 server 发送请求，RTT 为 500 微秒，使得任务在发送之后可以进入睡眠也可以保证等待响应的时间不会太长，网络包除开头部信息外，数据长度为 10 字节
+
+![\<img alt="" data-attachment-key="83PV8WTT" width="850" height="865" src="attachments/83PV8WTT.png" ztype="zimage">](attachments/83PV8WTT.png)
+
+### Two Processes Waiting for a Network Interrupt and a Timer Interrupt, Respectively
+
+![\<img alt="" data-attachment-key="CN4RYJPJ" width="848" height="386" src="attachments/CN4RYJPJ.png" ztype="zimage">](attachments/CN4RYJPJ.png)
+
+右图两条垂线中间表示 timer task 正在运行
+
+### 评价
 
 这里减少了内核不可抢占的部分，但是上下文切换和前半段（唤醒中断处理线程或目标进程）还是不可抢占的，而我的做法则只有上下文切换的代码是不可抢占的。
