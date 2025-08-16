@@ -31,3 +31,9 @@ DESTDIR=/path/to/staging/root meson install -C builddir
 
 
 
+## 添加额外的依赖
+
+创建一个叫 `subprojects` 的子目录，之后可以通过 `meson wrap install XXX`，会在 `subprojects` 目录下新增一个 `XXX.wrap` 的文件，之后再在 `meson.build` 中添加对应的依赖。
+
+
+
