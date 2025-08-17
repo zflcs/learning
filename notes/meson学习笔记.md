@@ -15,6 +15,8 @@ Meson不允许在源代码树内构建源代码。所有构建工件都存储在
 
 `-g` 添加 debug 信息，`-Wall` 使能编译器警告。
 
+
+
 ## Using Meson as a distro packager
 
 ```shell
@@ -34,6 +36,167 @@ DESTDIR=/path/to/staging/root meson install -C builddir
 ## 添加额外的依赖
 
 创建一个叫 `subprojects` 的子目录，之后可以通过 `meson wrap install XXX`，会在 `subprojects` 目录下新增一个 `XXX.wrap` 的文件，之后再在 `meson.build` 中添加对应的依赖。
+
+
+
+## 编译类型 `--buildtype`
+
+1. plain：不使用额外的构建参数
+2. debug：生成调试信息，但结果未优化
+3. debugoptmized：生成调试信息并优化代码（`-g -O2`）
+4. release：全面优化，无调试信息
+
+
+
+## 编译后端
+
+默认使用 ninja，可以通过 `--backend=xx` 来设置其他后端。
+
+编译可以直接使用 `ninja -C builddir`
+
+
+
+## 测试
+
+`meson test -C builddir` 或 `ninja -C builddir test`
+
+不强制使用任何特定的测试框架，可以自由使用 GTest、Boost Test、Check 等。
+
+
+
+## 安装构建的软件
+
+`meson install -C builddir`，默认安装到 `/usr/local`，可以通过 `--prefix /your/prefix` 来安装到指定的目录，或者使用 `DESTDIR` 环境变量。
+
+也可以使用 `ninja -C builddir install`
+
+
+
+## 错误
+
+0 表示成功，1 表示 meson.build 文件出现问题，2 表示内部出错。
+
+
+
+## 工作流程
+
+setup $\rightarrow$ compile $\rightarrow$ install
+
+
+
+## 帮助
+
+1. `meson configure -h` 查看配置的帮助
+2. `meson compile -h` 查看编译的帮助
+
+
+
+## 发布
+
+`meson dist` 从当前源码树发布存档
+
+
+
+## 初始化
+
+`meson init` 基于一组模板创建一组基本的构建文件，可以使用 `-h` 来查看帮助。
+
+1. -n 表示项目名字，name 默认为当前目录的名字
+2. -e 可执行文件名字，默认为项目名
+3. -d 依赖，使用逗号分隔
+4. -l 使用的语言，默认为自动检索源文件的语言
+5. -b 构建目录
+6. --type 项目类型，可执行文件或库
+
+
+
+## env2mfile
+
+`meson env2mfile`创建本地和交叉编译的文件，使用 `-h` 查看帮助。
+
+1. --gccsuffix：gcc 版本后缀
+2. -o：输出文件
+3. --cross：生成交叉编译文件
+4. --native：生成本地编译文件
+5. --use-for-build：使用 `_FOR_BUILD` 环境变量
+6. --system： 定义交叉编译的系统
+7. --subsystem：定义交叉编译的子系统
+8. --kernel：定义交叉编译的内核
+9. --cpu：定义交叉编译的 CPU
+10. --cpu-family：定义交叉编译的 CPU 家族
+11. --endian：定义交叉编译的字节序
+
+
+
+## introspect
+
+`meson introspec` 可以打印出一些信息
+
+
+
+## reprotest
+
+`meson reprotest`可编译两次并检查最终结果是否相同，必须要再测试的项目的源根目录中运行。
+
+
+
+## rewrite
+
+`meson rewrite` 修改 meson 项目
+
+
+
+## setup
+
+`meson setup --clearcache --reconfigure <builddir>` 可以在单个命令中清除缓存并重新配置。
+
+
+
+## subprojects
+
+`meson subprojects` 管理子项目，`-h` 查看帮助
+
+
+
+## wrap
+
+`meson wrap` 管理 WrapDB 依赖项的实用程序
+
+
+
+## devenv
+
+`meson devenv` 用于运行命令，或者打开交互式的 shell
+
+
+
+## subdir
+
+在 `meson.build` 中使用 `subdir()`，会执行给定的子目录中的 `meson.build` 中的内容，并且所有的状态（变量）都会传入子目录
+
+
+
+## 交叉编译
+
+```meson
+# aarch64.ini
+[constants]
+arch = 'aarch64-linux-gnu'
+```
+
+```meson
+# cross.ini
+[binaries]
+c = arch + '-gcc'
+cpp = arch + '-g++'
+strip = arch + '-strip'
+pkg-config = arch + '-pkg-config'
+...
+```
+
+`meson setup --cross-file aarch64.ini --cross-file cross.ini builddir`
+
+文件组合发生在 meson 解析变量之前，
 
 
 
